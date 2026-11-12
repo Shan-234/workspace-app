@@ -1,0 +1,315 @@
+
+.welcome-container {
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    box-sizing: border-box;
+    background: #090e1b;
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+    position: relative;
+    overflow: hidden;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+/* Background glow effects */
+
+.welcome-glow {
+    position: absolute;
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    filter: blur(110px);
+    opacity: 0.22;
+    pointer-events: none;
+}
+
+.welcome-glow-one {
+    background: #3658ed;
+    top: -220px;
+    left: -180px;
+}
+
+.welcome-glow-two {
+    background: #7c3aed;
+    bottom: -260px;
+    right: -180px;
+}
+
+/* Branding */
+
+.welcome-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+    font-size: 13px;
+    font-weight: 750;
+    letter-spacing: 3px;
+    z-index: 1;
+}
+
+.brand-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #4775ff, #8b5cf6);
+    color: white;
+    font-size: 22px;
+}
+
+/* Main card */
+
+.welcome-card {
+    width: 100%;
+    max-width: 600px;
+    box-sizing: border-box;
+    background: rgba(20, 28, 48, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 24px;
+    padding: 36px 42px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+    z-index: 1;
+}
+
+.welcome-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.step-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    color: #a5b4fc;
+}
+
+.step-category {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+}
+
+/* Progress bar */
+
+.welcome-progress {
+    height: 4px;
+    width: 100%;
+    border-radius: 20px;
+    background: #29334b;
+    overflow: hidden;
+}
+
+.welcome-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4775ff, #a78bfa);
+    border-radius: inherit;
+}
+
+/* Message */
+
+.welcome-content {
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.welcome-message {
+    width: 100%;
+}
+
+.welcome-symbol {
+    font-size: 35px;
+    color: #a5b4fc;
+    margin-bottom: 20px;
+}
+
+.welcome-message h1 {
+    font-size: clamp(27px, 5vw, 36px);
+    font-weight: 750;
+    letter-spacing: -1.2px;
+    line-height: 1.2;
+    margin: 0 0 18px;
+    color: #f8fafc;
+}
+
+.welcome-message p {
+    font-size: 15px;
+    line-height: 1.85;
+    color: #a9b5ca;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+/* Numbered pagination */
+
+.welcome-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 32px;
+}
+
+.page-number {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #7e8ba4;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        transform 0.25s ease,
+        background 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.page-number:hover {
+    background: #283551;
+    color: white;
+}
+
+.page-number.active {
+    background: #4f6df5;
+    color: white;
+    transform: scale(1.2);
+    box-shadow: 0 0 20px rgba(79, 109, 245, 0.4);
+}
+
+/* Action buttons */
+
+.welcome-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.back-button,
+.next-button,
+.skip-button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.back-button {
+    border: none;
+    background: transparent;
+    color: #a9b5ca;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.back-button:hover:not(:disabled) {
+    color: white;
+}
+
+.back-button:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+.next-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 15px 24px;
+    border: none;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #4f6df5, #7655e8);
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.next-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(79, 109, 245, 0.3);
+}
+
+.next-button span {
+    font-size: 19px;
+}
+
+/* Skip button and footer */
+
+.skip-button {
+    margin-top: 28px;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: #8795ad;
+    font-size: 13px;
+    z-index: 1;
+}
+
+.skip-button:hover {
+    color: white;
+}
+
+.welcome-footer {
+    margin-top: 45px;
+    color: #596780;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-align: center;
+    z-index: 1;
+}
+
+button:focus-visible {
+    outline: 2px solid #a5b4fc;
+    outline-offset: 4px;
+}
+
+/* Responsive layout */
+
+@media (max-width: 600px) {
+    .welcome-card {
+        padding: 26px 22px;
+        border-radius: 18px;
+    }
+
+    .welcome-content {
+        min-height: 310px;
+    }
+
+    .welcome-message p {
+        font-size: 14px;
+    }
+
+    .welcome-pagination {
+        gap: 7px;
+    }
+
+    .next-button {
+        padding: 14px 17px;
+        gap: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-number,
+    .next-button {
+        transition: none;
+    }
+}
