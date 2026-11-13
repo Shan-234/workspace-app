@@ -1,0 +1,823 @@
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+.dashboard {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background:
+        radial-gradient(
+            ellipse at 85% 0%,
+            rgba(79, 70, 229, 0.09),
+            transparent 45%
+        ),
+        #090e1b;
+    color: #f1f5f9;
+    font-family: 'IBM Plex Sans', Arial, sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.1px;
+    overflow: hidden;
+}
+
+.dashboard,
+.dashboard * {
+    box-sizing: border-box;
+}
+
+.dashboard-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.dashboard-header {
+    width: 100%;
+    flex-shrink: 0;
+    background: #090e1b;
+    border-bottom: 1px solid #263148;
+    z-index: 10;
+}
+
+.dashboard-header-inner {
+    width: 100%;
+    padding: 24px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+}
+
+.dashboard-eyebrow,
+.dashboard-section-eyebrow {
+    color: #818cf8;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.8px;
+    margin: 0 0 10px;
+}
+
+.dashboard-header h1 {
+    font-size: clamp(24px, 3vw, 32px);
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin: 0 0 6px;
+}
+
+.dashboard-header h1 span {
+    color: #a5b4fc;
+}
+
+.dashboard-subtitle,
+.dashboard-section-subtitle {
+    color: #94a3b8;
+    font-size: 14px;
+    margin: 6px 0 0;
+}
+
+.dashboard-body {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+.dashboard-slide-nav {
+    width: 220px;
+    flex-shrink: 0;
+    background: rgba(12, 18, 33, 0.96);
+    border-right: 1px solid #263148;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 28px 20px 28px 24px;
+    z-index: 5;
+}
+
+.slide-nav-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #64748b;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    margin-bottom: 24px;
+    padding-left: 12px;
+}
+
+.slide-nav-heading-line {
+    width: 15px;
+    height: 1px;
+    background: #6366f1;
+}
+
+.slide-nav-items {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.slide-nav-items::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 25px;
+    bottom: 25px;
+    width: 1px;
+    background: #303b54;
+}
+
+.slide-nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    min-height: 70px;
+    padding: 10px 0;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-family: 'IBM Plex Sans', Arial, sans-serif;
+    text-align: left;
+    cursor: pointer;
+    transition: color 250ms ease;
+}
+
+.slide-nav-item:hover {
+    color: #c7d2fe;
+}
+
+.slide-nav-item:focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+.slide-nav-track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 27px;
+    height: 27px;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.slide-nav-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #475569;
+    border: 1px solid #64748b;
+    transition:
+        width 250ms ease,
+        height 250ms ease,
+        background 250ms ease,
+        box-shadow 250ms ease,
+        border-color 250ms ease;
+}
+
+.slide-nav-item-active .slide-nav-dot {
+    width: 12px;
+    height: 12px;
+    background: #818cf8;
+    border-color: #a5b4fc;
+    box-shadow:
+        0 0 0 5px rgba(99, 102, 241, 0.13),
+        0 0 16px rgba(129, 140, 248, 0.3);
+}
+
+.slide-nav-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.slide-nav-number {
+    color: #64748b;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
+    transition: color 250ms ease;
+}
+
+.slide-nav-name {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    transition:
+        color 250ms ease,
+        font-weight 250ms ease;
+}
+
+.slide-nav-item-active .slide-nav-number {
+    color: #818cf8;
+}
+
+.slide-nav-item-active .slide-nav-name {
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+.slide-nav-footer {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    margin-top: 28px;
+    padding-top: 20px;
+    padding-left: 12px;
+    border-top: 1px solid #263148;
+    color: #64748b;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+}
+
+.slide-nav-current {
+    color: #a5b4fc;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.slide-nav-separator {
+    color: #475569;
+}
+
+.dashboard-slides {
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    overscroll-behavior-y: contain;
+    scrollbar-width: none;
+}
+
+.dashboard-slides::-webkit-scrollbar {
+    display: none;
+}
+
+.dashboard-slide {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+}
+
+.dashboard-slide-inner {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 32px 32px;
+}
+
+.dashboard-slide-content {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+        opacity 500ms ease,
+        transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dashboard-slide.slide-visible .dashboard-slide-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dashboard-section-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #29344d;
+}
+
+.dashboard-section-header h2 {
+    color: #f8fafc;
+    font-size: clamp(22px, 2.5vw, 30px);
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.dashboard-overview-badge {
+    background: #1e2540;
+    border: 1px solid #303b60;
+    border-radius: 999px;
+    color: #a5b4fc;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 6px 14px;
+}
+
+.dashboard-stats {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    padding-top: 24px;
+}
+
+.dashboard-stat-card {
+    min-width: 0;
+    min-height: 0;
+    background: #151d30;
+    border: 1px solid #29344d;
+    border-radius: 16px;
+    padding: clamp(20px, 2.5vw, 36px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition:
+        border-color 0.2s,
+        transform 0.2s;
+}
+
+.dashboard-stat-card:hover {
+    border-color: #46547a;
+    transform: translateY(-3px);
+}
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.stat-header h3 {
+    color: #94a3b8;
+    font-size: clamp(13px, 1.1vw, 16px);
+    font-weight: 500;
+    margin: 0;
+}
+
+.stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.stat-purple { color: #818cf8; }
+.stat-green { color: #34d399; }
+.stat-yellow { color: #fbbf24; }
+.stat-red { color: #fb7185; }
+
+.dashboard-stat-card h1 {
+    color: #f8fafc;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: clamp(48px, 6vw, 100px);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin: 0;
+}
+
+#tasks-completed h1 { color: #34d399; }
+#tasks-due-soon h1 { color: #fbbf24; }
+#tasks-overdue h1 { color: #fb7185; }
+
+.dashboard-slide.slide-visible .dashboard-stat-card {
+    animation: card-entrance 550ms both;
+}
+
+.dashboard-slide.slide-visible .dashboard-stat-card:nth-child(1) {
+    animation-delay: 100ms;
+}
+
+.dashboard-slide.slide-visible .dashboard-stat-card:nth-child(2) {
+    animation-delay: 160ms;
+}
+
+.dashboard-slide.slide-visible .dashboard-stat-card:nth-child(3) {
+    animation-delay: 220ms;
+}
+
+.dashboard-slide.slide-visible .dashboard-stat-card:nth-child(4) {
+    animation-delay: 280ms;
+}
+
+@keyframes card-entrance {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dashboard-paged-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-page-viewport {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-page-grid {
+    flex: 1;
+    min-height: 0;
+    animation: grid-appear 240ms ease-out both;
+}
+
+.dashboard-page-grid > * {
+    animation: item-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dashboard-page-grid > :nth-child(4n + 1) {
+    animation-delay: 20ms;
+}
+
+.dashboard-page-grid > :nth-child(4n + 2) {
+    animation-delay: 65ms;
+}
+
+.dashboard-page-grid > :nth-child(4n + 3) {
+    animation-delay: 110ms;
+}
+
+.dashboard-page-grid > :nth-child(4n + 4) {
+    animation-delay: 155ms;
+}
+
+.dashboard-page-leaving {
+    animation: grid-disappear 170ms ease-in both;
+}
+
+.dashboard-page-leaving > * {
+    animation: none;
+}
+
+@keyframes grid-appear {
+    from {
+        opacity: 0.65;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes grid-disappear {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.985);
+    }
+}
+
+@keyframes item-rise {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dashboard-labels-list {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 20px 0;
+}
+
+.dashboard-labels-list > * {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dashboard-teams-list {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 20px 0;
+}
+
+.dashboard-teams-list > * {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dashboard-pagination {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-top: 18px;
+    border-top: 1px solid #29344d;
+}
+
+.pagination-info {
+    color: #94a3b8;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+}
+
+.pagination-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.dashboard-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 14px;
+    background: #1a2438;
+    border: 1px solid #34415c;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-family: 'IBM Plex Sans', Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        border-color 0.2s,
+        color 0.2s;
+}
+
+.dashboard-button:hover:not(:disabled) {
+    background: #273453;
+    border-color: #6366f1;
+    color: #ffffff;
+}
+
+.dashboard-button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.dashboard-button:focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: 3px;
+}
+
+@media (max-width: 1100px) {
+    .dashboard-slide-nav {
+        width: 180px;
+        padding-left: 16px;
+        padding-right: 12px;
+    }
+
+    .dashboard-slide-inner {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+}
+
+@media (max-width: 900px) {
+    .dashboard-slide-nav {
+        width: 62px;
+        padding: 20px 12px;
+        align-items: center;
+    }
+
+    .slide-nav-heading,
+    .slide-nav-footer,
+    .slide-nav-item-content {
+        display: none;
+    }
+
+    .slide-nav-items {
+        align-items: center;
+    }
+
+    .slide-nav-items::before {
+        left: 13px;
+    }
+
+    .slide-nav-item {
+        width: 27px;
+        min-height: 64px;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .dashboard-labels-list,
+    .dashboard-teams-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .dashboard-labels-list {
+        grid-template-rows: repeat(6, minmax(0, 1fr));
+    }
+
+    .dashboard-teams-list {
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-header-inner,
+    .dashboard-slide-inner {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .dashboard-labels-list,
+    .dashboard-teams-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-labels-list {
+        grid-template-rows: repeat(8, minmax(0, 1fr));
+    }
+
+    .dashboard-teams-list {
+        grid-template-rows: repeat(6, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    .dashboard-header-inner,
+    .dashboard-slide-inner {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .dashboard-slide-inner {
+        padding-top: 18px;
+        padding-bottom: 18px;
+    }
+
+    .dashboard-slide-nav {
+        width: 44px;
+        padding: 12px 6px;
+    }
+
+    .dashboard-stat-card {
+        padding: 16px;
+    }
+
+    .dashboard-stat-card h1 {
+        font-size: 42px;
+    }
+
+    .dashboard-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pagination-actions {
+        width: 100%;
+    }
+
+    .pagination-actions .dashboard-button {
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-labels-list,
+    .dashboard-teams-list {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-labels-list {
+        grid-template-rows: repeat(16, minmax(60px, 1fr));
+    }
+
+    .dashboard-teams-list {
+        grid-template-rows: repeat(12, minmax(60px, 1fr));
+    }
+
+    .dashboard-slide {
+        height: auto;
+        min-height: 100%;
+    }
+
+    .dashboard-slide-inner,
+    .dashboard-slide-content {
+        min-height: 100%;
+    }
+
+    .dashboard-page-viewport {
+        min-height: 1100px;
+    }
+
+    .dashboard-stats {
+        gap: 10px;
+    }
+}
+
+@media (max-height: 650px) {
+    .dashboard-slide {
+        height: auto;
+        min-height: 100%;
+    }
+
+    .dashboard-stats {
+        min-height: 260px;
+    }
+
+    .dashboard-page-viewport {
+        min-height: 480px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-slides {
+        scroll-behavior: auto;
+    }
+
+    .dashboard-slide-content {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .dashboard-slide.slide-visible .dashboard-stat-card,
+    .dashboard-page-grid,
+    .dashboard-page-grid > * {
+        animation: none;
+    }
+
+    .dashboard-stat-card,
+    .slide-nav-dot,
+    .slide-nav-item,
+    .slide-nav-name,
+    .slide-nav-number {
+        transition: none;
+    }
+}

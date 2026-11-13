@@ -1,0 +1,47 @@
+.label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid;
+    border-radius: 999px;
+    font-weight: 600;
+    white-space: nowrap;
+    width: fit-content;
+    line-height: 1.2;
+}
+
+.label-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Small */
+.label-small {
+    padding: 3px 8px;
+    font-size: 11px;
+}
+
+.label-small .label-dot {
+    width: 5px;
+    height: 5px;
+}
+
+/* Medium */
+.label-medium {
+    padding: 5px 11px;
+    font-size: 12px;
+}
+
+/* Large */
+.label-large {
+    padding: 8px 15px;
+    font-size: 14px;
+}
+
+.label-large .label-dot {
+    width: 9px;
+    height: 9px;
+}

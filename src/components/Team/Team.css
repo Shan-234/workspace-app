@@ -1,0 +1,64 @@
+
+.team-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 9px 12px;
+    width: fit-content;
+    max-width: 100%;
+
+    background: #151d30;
+    border: 1px solid #29344d;
+    border-radius: 9px;
+
+    color: #f1f5f9;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.team-button:hover {
+    background: #1e2942;
+    border-color: #6366f1;
+}
+
+.team-button:focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: 2px;
+}
+
+.team-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.team-notifications {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+
+    background: #4f46e5;
+    border-radius: 50px;
+
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.team-arrow {
+    color: #94a3b8;
+    font-size: 16px;
+    transition: transform 0.2s;
+}
+
+.team-button:hover .team-arrow {
+    transform: translateX(3px);
+}
