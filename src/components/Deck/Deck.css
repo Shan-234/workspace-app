@@ -1,0 +1,182 @@
+
+.deck {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    background: #101726;
+    border: 1px solid #29344b;
+    border-radius: 18px;
+    overflow: hidden;
+    font-family: "IBM Plex Sans", sans-serif;
+}
+
+.deck-header {
+    flex-shrink: 0;
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid #29344b;
+}
+
+.deck-title-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 10px 16px;
+    background: #1b253b;
+    border: 1px solid #344058;
+    border-radius: 12px;
+}
+
+.deck-title {
+    margin: 0;
+    color: #f1f5ff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.deck-task-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 25px;
+    height: 25px;
+    padding: 0 7px;
+    background: #303c57;
+    border-radius: 7px;
+    color: #b7c4de;
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.deck-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+    padding: 16px 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #344058 transparent;
+}
+
+.deck-cards-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.deck-cards-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.deck-cards-list::-webkit-scrollbar-thumb {
+    background: #344058;
+    border-radius: 10px;
+}
+
+.deck-cards-list::-webkit-scrollbar-thumb:hover {
+    background: #52617f;
+}
+
+.deck-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    min-height: 140px;
+    padding: 20px;
+    border: 1px dashed #344058;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.deck-empty p {
+    margin: 0;
+    color: #a5b3cc;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.deck-empty span {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.deck-footer {
+    flex-shrink: 0;
+    padding: 12px;
+    border-top: 1px solid #29344b;
+    background: #101726;
+}
+
+.deck-add-task {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 16px;
+    background: rgba(99, 102, 241, 0.09);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 10px;
+    color: #a5a6ff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.deck-add-task:hover {
+    background: rgba(99, 102, 241, 0.18);
+    border-color: rgba(129, 140, 248, 0.5);
+    color: #e0e7ff;
+}
+
+.deck-add-task:active {
+    transform: scale(0.98);
+}
+
+.deck-add-task:focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+    .deck {
+        border-radius: 14px;
+    }
+
+    .deck-header {
+        padding: 12px;
+    }
+
+    .deck-title-box {
+        min-height: 44px;
+    }
+
+    .deck-cards-list {
+        padding: 12px 10px;
+        gap: 10px;
+    }
+
+    .deck-footer {
+        padding: 10px;
+    }
+}

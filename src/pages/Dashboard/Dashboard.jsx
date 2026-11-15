@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import Label from "../../components/Label/Label";
 import Team from "../../components/Team/Team";
 import "./Dashboard.css";
+import { useLocation, useNavigate } from "react-router";
+import { supabase } from "../../lib/Supabase/supabase";
 
 function AnimatedPage({
     items,
@@ -107,7 +109,44 @@ function AnimatedPage({
     );
 }
 
+async function getSessionId() {
+    const {
+        data: { session },
+        error
+    } = await supabase.auth.getSession();
+
+    if (error) {
+        throw error;
+    }
+
+    if (session) {
+        return session.user.id;
+    }
+
+    return null;
+}
+
+async function signIn() {
+    const {
+        data,
+        error: signInError
+    } = await supabase.auth.signInAnonymously();
+
+    if (signInError) {
+        throw signInError;
+    }
+
+    return data.user.id;
+}
+
 export default function Dashboard() {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const { user_id } = location.state ?? {};
+
+    const [userId, setUserId] = useState("");
+
     const slidesRef = useRef(null);
     const [activeSlide, setActiveSlide] = useState(0);
 
@@ -120,6 +159,22 @@ export default function Dashboard() {
         { id: "labels", name: "Organization" },
         { id: "teams", name: "Collaboration" }
     ];
+
+    useEffect(() => {
+        if (user_id) {
+            setUserId(user_id);
+        } else {
+            getSessionId().then((session_id) => {
+                if (session_id) {
+                    setUserId(session_id);
+                } else {
+                    signIn().then((new_id) => {
+                        setUserId(new_id);
+                    });
+                }
+            });
+        }
+    }, []);
 
     const user_progress = {
         tasks_total: 29,
@@ -300,6 +355,10 @@ export default function Dashboard() {
             container.removeEventListener("scroll", updateActiveSlide);
         };
     }, []);
+
+    const NavigateToProjects = (team_id) => {
+
+    };
 
     return (
         <main className="dashboard">

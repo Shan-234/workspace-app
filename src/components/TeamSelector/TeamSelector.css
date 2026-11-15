@@ -1,0 +1,181 @@
+
+.team-selector-container {
+    position: relative;
+    width: 100%;
+    font-family: "IBM Plex Sans", sans-serif;
+}
+
+.team-selector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 84px;
+    padding: 18px 20px;
+    background: #151c2e;
+    border: 1px solid #29344b;
+    border-radius: 16px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.team-selector:hover {
+    background: #192238;
+    border-color: #3b4965;
+}
+
+.team-selector-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    flex: 1;
+}
+
+.team-selector-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #8794ad;
+}
+
+.team-selector-name {
+    margin: 0;
+    color: #f1f5ff;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.team-selector-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.team-selector-icon-button {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    color: #a5b3cc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.team-selector-icon-button:hover {
+    background: rgba(99, 102, 241, 0.12);
+    color: #a5a6ff;
+}
+
+.team-selector-icon-button:focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: 2px;
+}
+
+.team-selector-divider {
+    width: 1px;
+    height: 23px;
+    background: #344058;
+    margin: 0 2px;
+}
+
+.team-selector-dropdown-button svg {
+    transition: transform 0.2s ease;
+}
+
+.team-selector-dropdown-button.active svg {
+    transform: rotate(180deg);
+}
+
+.team-selector-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 10px;
+    background: #192238;
+    border: 1px solid #344058;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.team-selector-menu-label {
+    display: block;
+    padding: 8px 10px 12px;
+    color: #8794ad;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+}
+
+.team-selector-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    color: #dce4f5;
+    text-align: left;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.team-selector-menu-item:hover {
+    background: #26324a;
+}
+
+.team-selector-menu-item.selected {
+    background: rgba(99, 102, 241, 0.12);
+    color: #c7c7ff;
+}
+
+.team-selector-team-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    background: #343b70;
+    color: #c7c7ff;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.team-selector-menu-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.team-selector-current-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #818cf8;
+}
+
+.team-selector-empty {
+    padding: 14px 10px;
+    color: #8794ad;
+    font-size: 13px;
+    text-align: center;
+}
