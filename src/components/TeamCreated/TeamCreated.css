@@ -1,0 +1,275 @@
+
+.team-created {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    box-sizing: border-box;
+    background: #0b1020;
+    color: #f1f5ff;
+}
+
+.team-created-panel {
+    width: 100%;
+    max-width: 720px;
+    padding: 48px;
+    box-sizing: border-box;
+
+    background: #141b2d;
+    border: 1px solid rgba(165, 180, 252, 0.18);
+    border-radius: 20px;
+
+    box-shadow: 0 24px 65px rgba(0, 0, 0, 0.2);
+
+    animation: team-created-appear 0.5s ease-out;
+}
+
+/* Header */
+
+.team-created-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    margin-bottom: 42px;
+}
+
+.team-created-success-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 64px;
+    height: 64px;
+
+    background: rgba(52, 211, 153, 0.12);
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    border-radius: 50%;
+
+    color: #34d399;
+    font-size: 30px;
+    font-weight: 700;
+
+    margin-bottom: 8px;
+}
+
+.team-created-header h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+    color: #f1f5ff;
+}
+
+.team-created-header p {
+    margin: 0;
+    max-width: 440px;
+    color: #91a0bb;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+/* Team details */
+
+.team-created-details {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}
+
+.team-created-field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.team-created-label {
+    color: #91a0bb;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.team-created-value {
+    padding: 15px 18px;
+
+    background: #0b1020;
+    border: 1px solid #303b55;
+    border-radius: 10px;
+
+    color: #f1f5ff;
+    font-size: 16px;
+    font-weight: 500;
+
+    overflow-wrap: anywhere;
+}
+
+.team-created-description {
+    min-height: 60px;
+    line-height: 1.7;
+    font-size: 14px;
+    font-weight: 400;
+    color: #cbd5e1;
+    white-space: pre-wrap;
+}
+
+/* Join code */
+
+.team-created-code-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.team-created-code {
+    flex: 1;
+    min-width: 0;
+    padding: 15px 18px;
+
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    border-radius: 10px;
+
+    color: #a5b4fc;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+
+    overflow-wrap: anywhere;
+}
+
+.team-created-copy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    width: 50px;
+    height: 50px;
+
+    background: rgba(129, 140, 248, 0.1);
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    border-radius: 10px;
+
+    color: #a5b4fc;
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.team-created-copy:hover:not(:disabled) {
+    background: rgba(129, 140, 248, 0.2);
+    border-color: #818cf8;
+}
+
+.team-created-copy:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.team-created-copy-success {
+    color: #34d399;
+    border-color: rgba(52, 211, 153, 0.35);
+    background: rgba(52, 211, 153, 0.1);
+}
+
+.team-created-copied-message {
+    color: #34d399;
+    font-size: 12px;
+}
+
+/* Dashboard button */
+
+.team-created-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 44px;
+}
+
+.team-created-dashboard-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    padding: 15px 28px;
+    min-width: 220px;
+
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: none;
+    border-radius: 10px;
+
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.team-created-dashboard-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+}
+
+.team-created-dashboard-button span {
+    font-size: 20px;
+}
+
+/* Entrance animation */
+
+@keyframes team-created-appear {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+
+@media (max-width: 600px) {
+    .team-created {
+        padding: 16px;
+    }
+
+    .team-created-panel {
+        padding: 30px 22px;
+    }
+
+    .team-created-header h1 {
+        font-size: 25px;
+    }
+
+    .team-created-code {
+        font-size: 14px;
+        letter-spacing: 0.5px;
+    }
+
+    .team-created-dashboard-button {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .team-created-panel {
+        animation: none;
+    }
+
+    .team-created-dashboard-button,
+    .team-created-copy {
+        transition: none;
+    }
+}

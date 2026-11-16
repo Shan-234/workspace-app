@@ -1,0 +1,696 @@
+
+.edit-teams {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    box-sizing: border-box;
+    background: #0b1020;
+    color: #f1f5ff;
+}
+
+.edit-teams-panel {
+    width: 100%;
+    max-width: 680px;
+    padding: 36px;
+    box-sizing: border-box;
+    background: #141b2d;
+    border: 1px solid rgba(165, 180, 252, 0.18);
+    border-radius: 20px;
+    box-shadow: 0 24px 65px rgba(0, 0, 0, 0.2);
+}
+
+.edit-teams-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px;
+    margin-bottom: 32px;
+    background: #0b1020;
+    border: 1px solid #303b55;
+    border-radius: 12px;
+}
+
+.edit-teams-tabs button {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #91a0bb;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.edit-teams-tabs button:hover {
+    color: #f1f5ff;
+    background: rgba(129, 140, 248, 0.08);
+}
+
+.edit-teams-tabs button.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+}
+
+.edit-teams-form {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}
+
+.edit-teams-field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.edit-teams-field label {
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.edit-teams-field input,
+.edit-teams-field textarea {
+    width: 100%;
+    padding: 14px 16px;
+    box-sizing: border-box;
+    background: #0b1020;
+    border: 1px solid #303b55;
+    border-radius: 10px;
+    color: #f1f5ff;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.edit-teams-field input::placeholder,
+.edit-teams-field textarea::placeholder {
+    color: #64748b;
+}
+
+.edit-teams-field input:focus,
+.edit-teams-field textarea:focus {
+    border-color: #818cf8;
+}
+
+.edit-teams-field textarea {
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.edit-teams-projects {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.edit-teams-projects-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.edit-teams-projects-header h3 {
+    margin: 0;
+    color: #f1f5ff;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.edit-teams-project-count {
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: rgba(129, 140, 248, 0.1);
+    color: #a5b4fc;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.edit-teams-project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.edit-teams-project-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.1),
+        rgba(139, 92, 246, 0.05)
+    );
+    border: 1px solid rgba(129, 140, 248, 0.2);
+    border-radius: 12px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.edit-teams-project-card:hover {
+    background: rgba(99, 102, 241, 0.13);
+    border-color: rgba(129, 140, 248, 0.4);
+}
+
+.edit-teams-project-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    background: rgba(129, 140, 248, 0.12);
+    border-radius: 10px;
+    color: #a5b4fc;
+    font-size: 22px;
+}
+
+.edit-teams-project-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.edit-teams-project-details h4 {
+    margin: 0 0 5px;
+    color: #f1f5ff;
+    font-size: 14px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.edit-teams-project-details p {
+    margin: 0;
+    color: #91a0bb;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.edit-teams-project-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #91a0bb;
+    font-size: 22px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.edit-teams-project-remove:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: #f87171;
+}
+
+.edit-teams-add-project {
+    width: 100%;
+    padding: 14px;
+    border: 1px dashed rgba(129, 140, 248, 0.45);
+    border-radius: 10px;
+    background: rgba(99, 102, 241, 0.04);
+    color: #a5b4fc;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.edit-teams-add-project:hover {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: #818cf8;
+}
+
+.edit-teams-actions,
+.edit-project-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+
+.edit-teams-actions {
+    margin-top: 8px;
+}
+
+.edit-teams-cancel,
+.edit-teams-submit {
+    padding: 13px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.edit-teams-cancel {
+    background: transparent;
+    border: 1px solid #303b55;
+    color: #cbd5e1;
+}
+
+.edit-teams-cancel:hover {
+    background: rgba(148, 163, 184, 0.1);
+}
+
+.edit-teams-submit {
+    border: none;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+}
+
+.edit-teams-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.edit-teams-submit:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.edit-teams-join {
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+    gap: 48px;
+}
+
+.edit-teams-join-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+.edit-teams-join-form .edit-teams-field {
+    width: 100%;
+}
+
+.edit-teams-join-form .edit-teams-field label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #f1f5ff;
+}
+
+.edit-teams-join-form input {
+    font-size: 16px;
+    letter-spacing: 0.5px;
+}
+
+.edit-teams-join-button {
+    min-width: 100px;
+}
+
+.edit-teams-join-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    margin-top: auto;
+    padding: 18px 0 8px;
+    text-align: center;
+}
+
+.edit-teams-join-success h2 {
+    margin: 0;
+    font-size: 23px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #f1f5ff;
+    animation: edit-teams-success-appear 0.4s ease-out;
+}
+
+.edit-teams-join-success h2 span {
+    color: #34d399;
+    font-weight: 700;
+}
+
+.edit-teams-join-success h2.edit-teams-join-error {
+    color: #f87171;
+}
+
+.edit-teams-dashboard-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-width: 220px;
+    padding: 15px 28px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.edit-teams-dashboard-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+}
+
+.edit-teams-dashboard-button span {
+    font-size: 20px;
+}
+
+.edit-teams-leave {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.edit-teams-leave h2 {
+    margin: 0;
+    color: #f1f5ff;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.edit-teams-leave-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.edit-teams-leave-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    background: #0b1020;
+    border: 1px solid #303b55;
+    border-radius: 12px;
+}
+
+.edit-teams-leave-name {
+    color: #f1f5ff;
+    font-size: 15px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.edit-teams-leave-button {
+    flex-shrink: 0;
+    padding: 10px 20px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: #f87171;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.edit-teams-leave-button:hover {
+    background: rgba(239, 68, 68, 0.22);
+    border-color: #f87171;
+}
+
+.edit-teams-leave-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    text-align: center;
+}
+
+.edit-teams-leave-placeholder h3 {
+    margin: 0 0 10px;
+    color: #f1f5ff;
+    font-size: 20px;
+}
+
+.edit-teams-leave-placeholder p {
+    margin: 0;
+    color: #91a0bb;
+    font-size: 14px;
+}
+
+.edit-project-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.edit-project-overlay-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.edit-project-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 101;
+    width: min(480px, 100%);
+    height: 100vh;
+    height: 100dvh;
+    box-sizing: border-box;
+    padding: 36px;
+    background: #141b2d;
+    border-left: 1px solid rgba(165, 180, 252, 0.18);
+    box-shadow: -15px 0 50px rgba(0, 0, 0, 0.25);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 0.35s ease, visibility 0.35s ease;
+    overflow-y: auto;
+}
+
+.edit-project-panel-open {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+.edit-project-panel-header {
+    padding-bottom: 24px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #303b55;
+}
+
+.edit-project-panel-header h2 {
+    margin: 0;
+    color: #f1f5ff;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.edit-project-form {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    height: calc(100% - 90px);
+}
+
+.edit-project-actions {
+    margin-top: auto;
+    padding-top: 24px;
+}
+
+.leave-team-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.leave-team-dialog {
+    width: 100%;
+    max-width: 420px;
+    padding: 32px;
+    box-sizing: border-box;
+    background: #141b2d;
+    border: 1px solid #303b55;
+    border-radius: 16px;
+    box-shadow: 0 24px 65px rgba(0, 0, 0, 0.4);
+    animation: leave-dialog-appear 0.2s ease-out;
+}
+
+.leave-team-dialog h2 {
+    margin: 0 0 16px;
+    color: #f1f5ff;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.leave-team-dialog p {
+    margin: 0;
+    color: #91a0bb;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.leave-team-dialog strong {
+    color: #f1f5ff;
+    font-weight: 600;
+}
+
+.leave-team-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.leave-team-cancel,
+.leave-team-confirm {
+    padding: 12px 20px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.leave-team-cancel {
+    background: transparent;
+    border: 1px solid #303b55;
+    color: #cbd5e1;
+}
+
+.leave-team-cancel:hover {
+    background: rgba(148, 163, 184, 0.1);
+}
+
+.leave-team-confirm {
+    background: #dc2626;
+    border: 1px solid #dc2626;
+    color: white;
+}
+
+.leave-team-confirm:hover {
+    background: #b91c1c;
+}
+
+@keyframes edit-teams-success-appear {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes leave-dialog-appear {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 600px) {
+    .edit-teams {
+        padding: 16px;
+    }
+
+    .edit-teams-panel {
+        padding: 24px 20px;
+    }
+
+    .edit-teams-tabs button {
+        padding: 11px 8px;
+        font-size: 13px;
+    }
+
+    .edit-teams-actions {
+        flex-direction: column-reverse;
+    }
+
+    .edit-teams-actions button {
+        width: 100%;
+    }
+
+    .edit-teams-join {
+        gap: 36px;
+    }
+
+    .edit-teams-join-success h2 {
+        font-size: 19px;
+    }
+
+    .edit-teams-dashboard-button {
+        width: 100%;
+    }
+
+    .edit-project-panel {
+        padding: 26px 20px;
+    }
+
+    .edit-project-actions button {
+        flex: 1;
+    }
+
+    .leave-team-dialog {
+        padding: 24px;
+    }
+
+    .leave-team-dialog-actions {
+        flex-direction: column-reverse;
+    }
+
+    .leave-team-dialog-actions button {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .edit-project-overlay,
+    .edit-project-panel,
+    .edit-teams-tabs button,
+    .edit-teams-project-card,
+    .edit-teams-project-remove,
+    .edit-teams-add-project,
+    .edit-teams-cancel,
+    .edit-teams-submit,
+    .edit-teams-dashboard-button,
+    .leave-team-cancel,
+    .leave-team-confirm {
+        transition: none;
+    }
+
+    .edit-teams-join-success h2,
+    .leave-team-dialog {
+        animation: none;
+    }
+}

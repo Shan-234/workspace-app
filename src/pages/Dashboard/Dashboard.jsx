@@ -4,7 +4,8 @@ import Label from "../../components/Label/Label";
 import Team from "../../components/Team/Team";
 import "./Dashboard.css";
 import { useLocation, useNavigate } from "react-router";
-import { supabase } from "../../lib/Supabase/supabase";
+import { createAccount, editUsername, retrieveAccount, supabase, workspace } from "../../lib/Supabase/supabase";
+import EditTeams from "../../components/EditTeams/EditTeams";
 
 function AnimatedPage({
     items,
@@ -145,12 +146,22 @@ export default function Dashboard() {
 
     const { user_id } = location.state ?? {};
 
+    const [editTeams, setEditTeams] = useState(false);
+
     const [userId, setUserId] = useState("");
+    const [username, setUsername] = useState("");
+    const [userLabels, setUserLabels] = useState({});
+    const [userTeams, setUserTeams] = useState({});
+    const [userProgress, setUserProgress] = useState({});
+    const [loading, setLoading] = useState(true);
+
+    // Username dialog state
+    const [showUsernameDialog, setShowUsernameDialog] = useState(false);
+    const [newUsername, setNewUsername] = useState("");
 
     const slidesRef = useRef(null);
     const [activeSlide, setActiveSlide] = useState(0);
 
-    const username = "user_123";
     const labelPageSize = 16;
     const teamPageSize = 12;
 
@@ -160,114 +171,64 @@ export default function Dashboard() {
         { id: "teams", name: "Collaboration" }
     ];
 
+    const initializeUserInformation = () => {
+        setUsername(workspace.currentUser["username"]);
+        setUserProgress(workspace.currentUser["user_progress"]);
+        setUserLabels(workspace.currentUser["user_labels"]);
+        setUserTeams(workspace.currentUser["user_teams"]);
+        setLoading(false);
+    };
+
     useEffect(() => {
         if (user_id) {
             setUserId(user_id);
+            retrieveAccount(user_id).then(() => {
+                initializeUserInformation();
+            });
         } else {
             getSessionId().then((session_id) => {
                 if (session_id) {
                     setUserId(session_id);
+                    retrieveAccount(session_id).then(() => {
+                        initializeUserInformation();
+                    });
                 } else {
                     signIn().then((new_id) => {
                         setUserId(new_id);
+                        createAccount(new_id).then(() => {
+                            initializeUserInformation();
+                        });
                     });
                 }
             });
         }
     }, []);
 
-    const user_progress = {
-        tasks_total: 29,
-        tasks_completed: 5,
-        tasks_due_soon: 10,
-        tasks_overdue: 2
+    // Username dialog handlers
+    const openUsernameDialog = () => {
+        setNewUsername(username);
+        setShowUsernameDialog(true);
     };
 
-    const user_labels = [
-        { id: 1, name: "Bug", description: "Software defects and issues.", color: "#EF4444" },
-        { id: 2, name: "Feature", description: "New functionality and features.", color: "#3B82F6" },
-        { id: 3, name: "Enhancement", description: "Improvements to existing functionality.", color: "#8B5CF6" },
-        { id: 4, name: "Documentation", description: "Documentation and technical guides.", color: "#06B6D4" },
-        { id: 5, name: "Testing", description: "Software testing and quality assurance.", color: "#F59E0B" },
-        { id: 6, name: "Design", description: "UI/UX and system design.", color: "#EC4899" },
-        { id: 7, name: "Research", description: "Research and experimentation.", color: "#14B8A6" },
-        { id: 8, name: "High Priority", description: "Urgent tasks requiring attention.", color: "#DC2626" },
-        { id: 9, name: "Low Priority", description: "Tasks with lower urgency.", color: "#84CC16" },
-        { id: 10, name: "Blocked", description: "Tasks waiting on dependencies.", color: "#F97316" },
-        { id: 11, name: "Back-end", description: "Server-side application development.", color: "#6366F1" },
-        { id: 12, name: "Front-end", description: "Client-side application development.", color: "#22C55E" },
-        { id: 13, name: "Security", description: "Application security improvements.", color: "#E11D48" },
-        { id: 14, name: "Performance", description: "Speed and scalability improvements.", color: "#0EA5E9" },
-        { id: 15, name: "Deployment", description: "Deployment and release management.", color: "#A855F7" },
-        { id: 16, name: "Database", description: "Database development and maintenance.", color: "#10B981" },
-        { id: 17, name: "API", description: "API development and integration.", color: "#2563EB" },
-        { id: 18, name: "Refactoring", description: "Code restructuring and cleanup.", color: "#D946EF" },
-        { id: 19, name: "Maintenance", description: "Routine software maintenance.", color: "#64748B" },
-        { id: 20, name: "Infrastructure", description: "Infrastructure development.", color: "#0891B2" },
-        { id: 21, name: "Automation", description: "Workflow and process automation.", color: "#7C3AED" },
-        { id: 22, name: "Integration", description: "Integration with external services.", color: "#0D9488" },
-        { id: 23, name: "Accessibility", description: "Accessibility improvements.", color: "#65A30D" },
-        { id: 24, name: "Optimization", description: "Resource and performance optimization.", color: "#EA580C" },
-        { id: 25, name: "Code Review", description: "Reviewing and improving code quality.", color: "#9333EA" },
-        { id: 26, name: "Planning", description: "Project planning and organization.", color: "#0284C7" },
-        { id: 27, name: "Analytics", description: "Data analysis and reporting.", color: "#059669" },
-        { id: 28, name: "Monitoring", description: "System monitoring and observability.", color: "#DB2777" },
-        { id: 29, name: "DevOps", description: "Development operations and tooling.", color: "#4F46E5" },
-        { id: 30, name: "Cloud", description: "Cloud infrastructure and services.", color: "#0E7490" },
-        { id: 31, name: "Machine Learning", description: "Machine learning development.", color: "#C026D3" },
-        { id: 32, name: "Data Processing", description: "Data transformation and processing.", color: "#16A34A" },
-        { id: 33, name: "Authentication", description: "User authentication and authorization.", color: "#BE123C" },
-        { id: 34, name: "Networking", description: "Network communication and protocols.", color: "#1D4ED8" },
-        { id: 35, name: "Mobile", description: "Mobile application development.", color: "#CA8A04" },
-        { id: 36, name: "UI Components", description: "Reusable interface components.", color: "#E879F9" },
-        { id: 37, name: "User Feedback", description: "Feedback and feature requests.", color: "#F43F5E" },
-        { id: 38, name: "Release", description: "Release preparation and coordination.", color: "#38BDF8" },
-        { id: 39, name: "Prototyping", description: "Rapid prototypes and experiments.", color: "#A3E635" },
-        { id: 40, name: "Technical Debt", description: "Addressing accumulated technical debt.", color: "#FB923C" }
-    ];
+    const closeUsernameDialog = () => {
+        setShowUsernameDialog(false);
+    };
 
-    const user_teams = [
-        { id: 21, name: "App Dev", notifications: 2 },
-        { id: 22, name: "Web Development", notifications: 5 },
-        { id: 23, name: "UI/UX Design", notifications: 3 },
-        { id: 24, name: "Back-end Engineering", notifications: 0 },
-        { id: 25, name: "Data Science", notifications: 7 },
-        { id: 26, name: "Quality Assurance", notifications: 1 },
-        { id: 27, name: "DevOps", notifications: 4 },
-        { id: 28, name: "Product Management", notifications: 6 },
-        { id: 29, name: "AI Research", notifications: 0 },
-        { id: 30, name: "Cybersecurity", notifications: 2 },
-        { id: 31, name: "Database Engineering", notifications: 8 },
-        { id: 32, name: "Cloud Infrastructure", notifications: 3 },
-        { id: 33, name: "Mobile Development", notifications: 4 },
-        { id: 34, name: "Platform Engineering", notifications: 1 },
-        { id: 35, name: "API Development", notifications: 6 },
-        { id: 36, name: "Machine Learning", notifications: 9 },
-        { id: 37, name: "Data Engineering", notifications: 2 },
-        { id: 38, name: "Infrastructure Operations", notifications: 5 },
-        { id: 39, name: "Release Management", notifications: 0 },
-        { id: 40, name: "Automation Engineering", notifications: 3 },
-        { id: 41, name: "Technical Documentation", notifications: 1 },
-        { id: 42, name: "Research and Development", notifications: 7 },
-        { id: 43, name: "Systems Architecture", notifications: 4 },
-        { id: 44, name: "Network Engineering", notifications: 2 },
-        { id: 45, name: "Application Security", notifications: 8 },
-        { id: 46, name: "Business Analytics", notifications: 3 },
-        { id: 47, name: "Customer Experience", notifications: 5 },
-        { id: 48, name: "Design Systems", notifications: 1 },
-        { id: 49, name: "Performance Engineering", notifications: 6 },
-        { id: 50, name: "Site Reliability", notifications: 4 },
-        { id: 51, name: "Cloud Security", notifications: 2 },
-        { id: 52, name: "Developer Experience", notifications: 7 },
-        { id: 53, name: "Product Research", notifications: 0 },
-        { id: 54, name: "Data Visualization", notifications: 3 },
-        { id: 55, name: "Integration Services", notifications: 5 },
-        { id: 56, name: "Testing Automation", notifications: 2 },
-        { id: 57, name: "Enterprise Applications", notifications: 8 },
-        { id: 58, name: "Distributed Systems", notifications: 4 },
-        { id: 59, name: "Innovation Lab", notifications: 6 },
-        { id: 60, name: "Technical Support", notifications: 1 }
-    ];
+    const saveUsername = (event) => {
+        event.preventDefault();
+
+        if (!newUsername.trim()) return;
+
+        editUsername(newUsername).then((success) => {
+            if (success) {
+                setUsername(newUsername);
+            } else {
+                console.error("Error updating username");
+            }
+        });
+
+        closeUsernameDialog();
+    };
 
     const navigateToSlide = (index) => {
         const container = slidesRef.current;
@@ -288,7 +249,10 @@ export default function Dashboard() {
         });
     };
 
+    // Updated: initialize slides only after loading finishes.
     useEffect(() => {
+        if (loading) return;
+
         const container = slidesRef.current;
         if (!container) return;
 
@@ -354,11 +318,27 @@ export default function Dashboard() {
             observer.disconnect();
             container.removeEventListener("scroll", updateActiveSlide);
         };
-    }, []);
+    }, [loading]);
 
     const NavigateToProjects = (team_id) => {
 
     };
+
+    if (loading) {
+        return (
+            <main className="dashboard-loading">
+                <div className="dashboard-loading-content">
+                    <div className="dashboard-loading-spinner"></div>
+                    <h2>WORKSPACE</h2>
+                    <p>Loading your workspace...</p>
+                </div>
+            </main>
+        );
+    }
+
+    if (editTeams) {
+        return <EditTeams />;
+    }
 
     return (
         <main className="dashboard">
@@ -376,8 +356,12 @@ export default function Dashboard() {
                                 Here's what's happening with your workspace.
                             </p>
                         </div>
-                        <button className="dashboard-button">
-                            Edit Profile
+                        <button
+                            type="button"
+                            className="dashboard-button"
+                            onClick={openUsernameDialog}
+                        >
+                            Edit Username
                         </button>
                     </div>
                 </header>
@@ -467,7 +451,7 @@ export default function Dashboard() {
                                                 <h3>Total Tasks</h3>
                                                 <span className="stat-icon stat-purple">▦</span>
                                             </div>
-                                            <h1>{user_progress.tasks_total}</h1>
+                                            <h1>{userProgress.tasks_total}</h1>
                                         </div>
 
                                         <div id="tasks-completed" className="dashboard-stat-card">
@@ -475,7 +459,7 @@ export default function Dashboard() {
                                                 <h3>Tasks Completed</h3>
                                                 <span className="stat-icon stat-green">✓</span>
                                             </div>
-                                            <h1>{user_progress.tasks_completed}</h1>
+                                            <h1>{userProgress.tasks_completed}</h1>
                                         </div>
 
                                         <div id="tasks-due-soon" className="dashboard-stat-card">
@@ -483,7 +467,7 @@ export default function Dashboard() {
                                                 <h3>Tasks Due Soon</h3>
                                                 <span className="stat-icon stat-yellow">◷</span>
                                             </div>
-                                            <h1>{user_progress.tasks_due_soon}</h1>
+                                            <h1>{userProgress.tasks_due_soon}</h1>
                                         </div>
 
                                         <div id="tasks-overdue" className="dashboard-stat-card">
@@ -491,7 +475,7 @@ export default function Dashboard() {
                                                 <h3>Tasks Overdue</h3>
                                                 <span className="stat-icon stat-red">!</span>
                                             </div>
-                                            <h1>{user_progress.tasks_overdue}</h1>
+                                            <h1>{userProgress.tasks_overdue}</h1>
                                         </div>
                                     </div>
                                 </div>
@@ -516,20 +500,32 @@ export default function Dashboard() {
                                         </button>
                                     </div>
 
-                                    <AnimatedPage
-                                        items={user_labels}
-                                        pageSize={labelPageSize}
-                                        gridClassName="dashboard-labels-list"
-                                        itemName="labels"
-                                        renderItem={label => (
-                                            <Label
-                                                key={label.id}
-                                                name={label.name}
-                                                color={label.color}
-                                                size="medium"
-                                            />
-                                        )}
-                                    />
+                                    {Object.keys(userLabels).length > 0 ? (
+                                        <AnimatedPage
+                                            items={Object.entries(userLabels).map(([id, label]) => ({
+                                                id: Number(id),
+                                                ...label
+                                            }))}
+                                            pageSize={labelPageSize}
+                                            gridClassName="dashboard-labels-list"
+                                            itemName="labels"
+                                            renderItem={label => (
+                                                <Label
+                                                    key={label.id}
+                                                    name={label.name}
+                                                    color={label.color}
+                                                    size="medium"
+                                                />
+                                            )}
+                                        />
+                                    ) : (
+                                        <div className="dashboard-labels-empty">
+                                            <h3>You haven't created any labels yet</h3>
+                                            <p>
+                                                Click <strong>Edit</strong> to create labels and organize your tasks.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </section>
@@ -547,31 +543,101 @@ export default function Dashboard() {
                                                 Access your shared workspaces
                                             </p>
                                         </div>
-                                        <button className="dashboard-button">
+                                        <button
+                                            className="dashboard-button"
+                                            onClick={() => { setEditTeams(true); }}
+                                        >
                                             Edit
                                         </button>
                                     </div>
 
-                                    <AnimatedPage
-                                        items={user_teams}
-                                        pageSize={teamPageSize}
-                                        gridClassName="dashboard-teams-list"
-                                        itemName="teams"
-                                        renderItem={team => (
-                                            <Team
-                                                key={team.id}
-                                                id={team.id}
-                                                name={team.name}
-                                                notifications={team.notifications}
-                                            />
-                                        )}
-                                    />
+                                    {Object.keys(userTeams).length > 0 ? (
+                                        <AnimatedPage
+                                            items={Object.entries(userTeams).map(([id, team]) => ({
+                                                id: id,
+                                                ...team
+                                            }))}
+                                            pageSize={teamPageSize}
+                                            gridClassName="dashboard-teams-list"
+                                            itemName="teams"
+                                            renderItem={team => (
+                                                <Team
+                                                    key={team.id}
+                                                    id={team.id}
+                                                    name={team.name}
+                                                    notifications={team.notifications}
+                                                />
+                                            )}
+                                        />
+                                    ) : (
+                                        <div className="dashboard-teams-empty">
+                                            <h3>You haven't joined any teams yet</h3>
+                                            <p>
+                                                Click <strong>Edit</strong> to join a team and start collaborating.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </section>
                     </div>
                 </div>
             </div>
+
+            {showUsernameDialog && (
+                <div className="username-dialog-overlay">
+                    <div
+                        className="username-dialog"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="username-dialog-title"
+                    >
+                        <h2 id="username-dialog-title">
+                            Edit Username
+                        </h2>
+
+                        <p>
+                            Update the name displayed on your workspace.
+                        </p>
+
+                        <form onSubmit={saveUsername}>
+                            <div className="username-dialog-field">
+                                <label htmlFor="new-username">
+                                    Username
+                                </label>
+
+                                <input
+                                    id="new-username"
+                                    type="text"
+                                    value={newUsername}
+                                    onChange={e => setNewUsername(e.target.value)}
+                                    placeholder="Enter your username"
+                                    autoFocus
+                                    required
+                                />
+                            </div>
+
+                            <div className="username-dialog-actions">
+                                <button
+                                    type="button"
+                                    className="username-dialog-cancel"
+                                    onClick={closeUsernameDialog}
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    className="username-dialog-save"
+                                    disabled={!newUsername.trim()}
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }
