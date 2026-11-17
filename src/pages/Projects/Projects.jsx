@@ -1,52 +1,258 @@
 
-import { useMemo, useState } from "react";
-import { useParams } from "react-router";
-import { Search, Plus } from "lucide-react";
-import { workspace } from "../../lib/Supabase/supabase";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router";
+import {
+    Search,
+    Plus,
+    PanelsTopLeft,
+    ArrowLeft,
+    FolderPlus,
+    FileText,
+    X
+} from "lucide-react";
+import { supabase, retrieveTeam, workspace, createProject, retrieveProject, retrieveAccount } from "../../lib/Supabase/supabase";
 import TeamSelector from "../../components/TeamSelector/TeamSelector";
 import ProjectPreview from "../../components/ProjectPreview/ProjectPreview";
 import Board from "../../components/Board/Board";
 import "./Projects.css";
 
+async function getSessionId() {
+    const {
+        data: { session },
+        error
+    } = await supabase.auth.getSession();
+
+    if (error) {
+        throw error;
+    }
+
+    if (session) {
+        return session.user.id;
+    }
+
+    return null;
+}
+
 export default function Projects() {
+    const navigate = useNavigate();
     const { team_id } = useParams();
 
-    const current_team = workspace.currentTeam;
-    const current_project = workspace.currentProject;
-
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedProjectId, setSelectedProjectId] = useState(
-        current_project?.id ?? current_team?.projects?.[0]?.id ?? null
-    );
 
-    const projects = current_team?.projects ?? [];
+    const [currentTeam, setCurrentTeam] = useState(null);
+    const [currentProject, setCurrentProject] = useState(null);
+
+    const [addProject, setAddProject] = useState(false);
+    const [creatingProject, setCreatingProject] = useState(false);
+    const [loadingProject, setLoadingProject] = useState(false);
+    const [projectNameInput, setProjectNameInput] = useState("");
+    const [projectDescription, setProjectDescription] = useState("");
+
+    useEffect(() => {
+        async function getUser() {
+            const user_id = await getSessionId();
+
+            if (user_id) {
+                await retrieveAccount(user_id);
+            } else {
+                navigate("/dashboard");
+            }
+        }
+
+        getUser();
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadTeam = async () => {
+            console.log("Loading Team", team_id);
+            setLoading(true);
+            setError(null);
+            setAddProject(false);
+
+            try {
+                const success = await retrieveTeam(team_id);
+
+                if (cancelled) return;
+
+                if (!success) {
+                    throw new Error(
+                        `Unable to retrieve team with ID ${team_id}`
+                    );
+                }
+
+                const team = workspace.currentTeam;
+
+                if (!team) {
+                    throw new Error("No team was loaded.");
+                }
+
+                const projects = Array.isArray(team.projects)
+                    ? team.projects
+                    : [];
+
+                const existingProject = workspace.currentProject;
+
+                const selectedProject =
+                    projects.find(
+                        (project) =>
+                            String(project.id) ===
+                            String(existingProject?.id)
+                    ) ?? null;
+
+                workspace.currentProject = selectedProject;
+
+                setCurrentTeam(team);
+                setCurrentProject(selectedProject);
+
+            } catch (err) {
+                if (!cancelled) {
+                    console.error("Error retrieving team:", err);
+                    setError(
+                        err instanceof Error
+                            ? err.message
+                            : "Unable to load team."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadTeam();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [team_id]);
+
+    useEffect(() => {
+        if (!team_id) return;
+
+        const channel = supabase
+            .channel(`team-${team_id}`)
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "projects",
+                    filter: `team_id=eq.${team_id}`
+                },
+                (payload) => {
+                    console.log("Project Added:", payload);
+                    handleNewProject(payload.new);
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "DELETE",
+                    schema: "public",
+                    table: "projects",
+                    filter: `team_id=eq.${team_id}`
+                },
+                (payload) => {
+                    console.log("Project Deleted:", payload);
+                }
+            )
+            .subscribe((status) => {
+                console.log("Realtime status:", status);
+            });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [team_id]);
+
+    const projects = currentTeam?.projects ?? [];
 
     const filteredProjects = useMemo(() => {
         return projects.filter((project) =>
-            project.name.toLowerCase().includes(searchQuery.toLowerCase())
+            (project.name ?? "")
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
         );
     }, [projects, searchQuery]);
 
-    const selectedProject = projects.find(
-        (project) => project.id === selectedProjectId
-    );
+    const selectedProjectId = currentProject?.id ?? null;
 
     const projectName =
-        selectedProject?.name ??
-        current_project?.name ??
-        "Select a project";
-    
-    let selectedCard = null;
-    let mouseClicked = false;
-    let offsetX = 0;
-    let offsetY = 0;
+        currentProject?.name ?? "Select a project";
 
     const handleProjectSelect = (projectId) => {
-        setSelectedProjectId(projectId);
+        setLoadingProject(true);
+        retrieveProject(projectId).then((current_project) => {
+            setLoadingProject(false);
+            setCurrentProject(current_project);
+            setAddProject(false);
+        });
     };
 
     const handleAddProject = () => {
-        console.log("Create project for team:", team_id);
+        console.log(currentTeam);
+        setProjectNameInput("");
+        setProjectDescription("");
+        setAddProject(true);
+    };
+
+    const handleCancelAddProject = () => {
+        setAddProject(false);
+        setProjectNameInput("");
+        setProjectDescription("");
+    };
+
+    const handleCreateProject = (event) => {
+        event.preventDefault();
+
+        setCreatingProject(true);
+
+        const name = projectNameInput.trim();
+        const description = projectDescription.trim();
+
+        if (!name) return;
+
+        createProject(name, description).then((success) => {
+            if (success) {
+                setCreatingProject(false);
+                handleCancelAddProject();
+                setCurrentTeam(workspace.currentTeam);
+                setCurrentProject(workspace.currentProject);
+            } else {
+                console.error("Error creating project!");
+            }
+        });
+    };
+
+    const handleNewProject = (new_project) => {
+        const project_id = new_project.id;
+
+        for (let i = 0; i < workspace.currentTeam["projects"].length; i++) {
+            if (workspace.currentTeam["projects"][i]["id"] === project_id) {
+                return;
+            }
+        }
+
+        const new_project_data = {
+            "id": project_id,
+            "name": new_project.name,
+            "notifications": 0,
+            "most_recent_log": ""
+        };
+
+        workspace.currentTeam["projects"].push(new_project_data);
+        setCurrentTeam({
+            "team_id": workspace.currentTeam.team_id,
+            "name": workspace.currentTeam.name,
+            "description": workspace.currentTeam.description,
+            "activity_logs": workspace.currentTeam.activity_logs,
+            "projects": workspace.currentTeam["projects"]
+        });
     };
 
     const handleTeamSettings = (teamId) => {
@@ -65,13 +271,232 @@ export default function Projects() {
         console.log("Project settings:", selectedProjectId);
     };
 
+    let board = (
+        <div className="projects-empty-board">
+            <div className="projects-empty-board-icon">
+                <PanelsTopLeft size={38} strokeWidth={1.4} />
+            </div>
+
+            <h2>Select a project</h2>
+
+            <p>
+                Choose a project from the sidebar to view its board,
+                manage tasks, and track progress.
+            </p>
+
+            <div className="projects-empty-board-hint">
+                <ArrowLeft size={16} strokeWidth={1.8} />
+                <span>Select a project from the sidebar</span>
+            </div>
+        </div>
+    );
+
+    if (loading) {
+        return (
+            <main className="projects-loading">
+                <div className="projects-loading-content">
+                    <div className="projects-loading-spinner"></div>
+                    <h2>WORKSPACE</h2>
+                    <p>Loading team projects...</p>
+                </div>
+            </main>
+        );
+    }
+
+    if (error || !currentTeam) {
+        return (
+            <main className="projects-loading">
+                <div className="projects-loading-content">
+                    <h2>WORKSPACE</h2>
+                    <p>{error ?? "Unable to load team."}</p>
+                </div>
+            </main>
+        );
+    }
+
+    if (currentProject) {
+        board = (
+            <Board
+                key={selectedProjectId ?? "empty"}
+                project_name={projectName}
+                onAddTask={handleAddTask}
+                onTaskSettings={handleTaskSettings}
+                onProjectSettings={handleProjectSettings}
+            />
+        );
+    }
+
+    if (addProject) {
+        board = (
+            <div className="projects-create-page">
+                <div className="projects-create-container">
+                    <div className="projects-create-topbar">
+                        <span className="projects-create-eyebrow">
+                            WORKSPACE / NEW PROJECT
+                        </span>
+
+                        <button
+                            type="button"
+                            className="projects-create-close"
+                            onClick={handleCancelAddProject}
+                            aria-label="Cancel creating project"
+                            title="Close"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <div className="projects-create-heading">
+                        <div className="projects-create-icon">
+                            <FolderPlus
+                                size={29}
+                                strokeWidth={1.6}
+                            />
+                        </div>
+
+                        <h2>Create a new project</h2>
+
+                        <p>
+                            Give your project a name and description
+                            to get started. Your project will belong
+                            to {currentTeam.name ?? "this team"}.
+                        </p>
+                    </div>
+
+                    <form
+                        className="projects-create-form"
+                        onSubmit={handleCreateProject}
+                    >
+                        <div className="projects-create-field">
+                            <label htmlFor="new-project-name">
+                                Project name
+                                <span className="projects-required">*</span>
+                            </label>
+
+                            <div className="projects-create-input-wrapper">
+                                <FolderPlus
+                                    size={18}
+                                    strokeWidth={1.7}
+                                />
+
+                                <input
+                                    id="new-project-name"
+                                    type="text"
+                                    placeholder="e.g. Website Redesign"
+                                    value={projectNameInput}
+                                    onChange={(event) =>
+                                        setProjectNameInput(
+                                            event.target.value
+                                        )
+                                    }
+                                    maxLength={100}
+                                    autoFocus
+                                    required
+                                />
+                            </div>
+
+                            <span className="projects-create-field-hint">
+                                Choose a short, recognizable name.
+                            </span>
+                        </div>
+
+                        <div className="projects-create-field">
+                            <label htmlFor="new-project-description">
+                                Description
+                                <span className="projects-optional">
+                                    Optional
+                                </span>
+                            </label>
+
+                            <div className="projects-create-textarea-wrapper">
+                                <FileText
+                                    size={18}
+                                    strokeWidth={1.7}
+                                />
+
+                                <textarea
+                                    id="new-project-description"
+                                    placeholder="What is this project about? Describe its goals, scope, or purpose..."
+                                    value={projectDescription}
+                                    onChange={(event) =>
+                                        setProjectDescription(
+                                            event.target.value
+                                        )
+                                    }
+                                    rows={5}
+                                    maxLength={1000}
+                                />
+                            </div>
+
+                            <div className="projects-create-field-bottom">
+                                <span>
+                                    Help your team understand the
+                                    purpose of this project.
+                                </span>
+
+                                <span>
+                                    {projectDescription.length}/1000
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="projects-create-divider" />
+
+                        <div className="projects-create-actions">
+                            <button
+                                type="button"
+                                className="projects-create-cancel"
+                                onClick={handleCancelAddProject}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="submit"
+                                className="projects-create-submit"
+                                disabled={!projectNameInput.trim()}
+                            >
+                                <Plus size={18} strokeWidth={2} />
+                                Create Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        );
+    }
+
+    if (creatingProject) {
+        board = (
+            <div className="projects-loading">
+                <div className="projects-loading-content">
+                    <div className="projects-loading-spinner"></div>
+                    <h2>WORKSPACE</h2>
+                    <p>Creating your project...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (loadingProject) {
+        board = (
+            <div className="projects-loading">
+                <div className="projects-loading-content">
+                    <div className="projects-loading-spinner"></div>
+                    <h2>WORKSPACE</h2>
+                    <p>Loading your project...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="projects-page">
             <aside className="projects-sidebar">
                 <div className="projects-sidebar-header">
                     <TeamSelector
-                        id={current_team?.id}
-                        name={current_team?.name ?? "Unnamed Team"}
+                        id={currentTeam.id}
+                        name={currentTeam.name ?? "Unnamed Team"}
                         onSettings={handleTeamSettings}
                     />
 
@@ -114,23 +539,34 @@ export default function Projects() {
                 </div>
 
                 <div className="projects-project-list">
-                    {filteredProjects.length > 0 ? (
-                        filteredProjects.map((project) => (
+                    {currentTeam["projects"].length > 0 ? (
+                        currentTeam["projects"].map((project) => (
                             <ProjectPreview
                                 key={project.id}
                                 id={project.id}
                                 name={project.name}
                                 notifications={project.notifications}
                                 most_recent_log={project.most_recent_log}
-                                selected={project.id === selectedProjectId}
+                                selected={
+                                    !addProject &&
+                                    String(project.id) ===
+                                    String(selectedProjectId)
+                                }
                                 onClick={handleProjectSelect}
                             />
                         ))
                     ) : (
                         <div className="projects-no-results">
-                            <Search size={24} strokeWidth={1.5} />
+                            <Search
+                                size={24}
+                                strokeWidth={1.5}
+                            />
                             <p>No projects found</p>
-                            <span>Try a different search term.</span>
+                            <span>
+                                {projects.length === 0
+                                    ? "Create a project to get started."
+                                    : "Try a different search term."}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -139,19 +575,13 @@ export default function Projects() {
                     <span className="projects-sidebar-status-dot" />
                     <span>Workspace</span>
                     <span className="projects-sidebar-team-name">
-                        {current_team?.name ?? "Team"}
+                        {currentTeam.name ?? "Team"}
                     </span>
                 </div>
             </aside>
 
             <main className="projects-board-area">
-                <Board
-                    key={selectedProjectId}
-                    project_name={projectName}
-                    onAddTask={handleAddTask}
-                    onTaskSettings={handleTaskSettings}
-                    onProjectSettings={handleProjectSettings}
-                />
+                {board}
             </main>
         </div>
     );

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import Workspace from '../Workspace/Workspace';
+import { title } from 'motion/react-client';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -192,6 +193,10 @@ export async function leaveTeam(team_id) {
         .eq("team_id", team_id)
         .single();
     
+    if (team_activity_error) {
+        return false;
+    }
+
     team_activity.activity_logs.push({
         "message": workspace.currentUser["username"] + " has left the team.",
         "timestamp": today.toLocaleDateString()
@@ -213,6 +218,198 @@ export async function leaveTeam(team_id) {
         .eq("team_id", team_id);
     
     if (error) {
+        return false;
+    }
+
+    return true;
+}
+
+export async function retrieveTeam(team_id) {
+    const { data: team_data, error: team_error } = await supabase
+        .from("teams")
+        .select("*")
+        .eq("team_id", team_id)
+        .single();
+    
+    if (team_error) {
+        return false;
+    }
+
+    workspace.currentTeam = {
+        "team_id": team_data.team_id,
+        "name": team_data.name,
+        "description": team_data.description,
+        "activity_logs": team_data.activity_logs,
+        "team_members": [],
+        "projects": []
+    };
+
+    const { data: members_data, error: members_error } = await supabase
+        .from("members")
+        .select("user_id")
+        .eq("team_id", team_id);
+
+    if (members_error) {
+        return false;
+    }
+
+    const member_ids = members_data.map(member => member.user_id);
+    const { data: accounts_data, error: accounts_error } = await supabase
+        .from("accounts")
+        .select("id, username")
+        .in("id", member_ids);
+    
+    workspace.currentTeam["team_members"] = accounts_data;
+
+    const { data: project_data, error: project_error } = await supabase
+        .from("projects")
+        .select("id, name")
+        .eq("team_id", team_id);
+    
+    if (project_error) {
+        return false;
+    }
+
+    for (let i = 0; i < project_data.length; i++) {
+        workspace.currentTeam["projects"].push({
+            "id": project_data[i].id,
+            "name": project_data[i].name,
+            "notifications": 0,
+            "most_recent_log": ""
+        });
+    }
+
+    return true;
+}
+
+export async function createProject(name, description) {
+    const today = new Date();
+    const { data: project_data, error: project_error } = await supabase
+        .from("projects")
+        .insert({
+            team_id: workspace.currentTeam["team_id"],
+            name: name,
+            description: description,
+            project_info: {
+                "tasks_total": 0,
+                "tasks_completed": 0,
+                "tasks_due_soon": 0,
+                "tasks_overdue": 0
+            }
+        })
+        .select()
+        .single();
+    
+    if (project_error) {
+        return false;
+    }
+
+    console.log(workspace.currentUser);
+
+    workspace.currentTeam["projects"].push({
+        "id": project_data.id,
+        "name": project_data.name,
+        "notifications": 0,
+        "most_recent_log": workspace.currentUser["username"] + " created Project " + name
+    });
+
+    workspace.currentTeam["activity_logs"].push({
+        "message": workspace.currentUser["username"] + " created Project " + name,
+        "timestamp": today.toLocaleDateString()
+    });
+
+    workspace.currentProject = {
+        "id": project_data.id,
+        "name": name,
+        "description": description,
+        "project_info": {
+            "tasks_total": 0,
+            "tasks_completed": 0,
+            "tasks_due_soon": 0,
+            "tasks_overdue": 0
+        },
+        "tasks": []
+    };
+
+    return true;
+}
+
+export async function retrieveProject(project_id) {
+    const { data: project_data, error: project_error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", project_id)
+        .single();
+
+    workspace.currentProject = {
+        "id": project_data.id,
+        "name": project_data.name,
+        "description": project_data.description,
+        "project_info": project_data.project_info,
+        "tasks": []
+    };
+
+    const { data: tasks_data, error: tasks_error } = await supabase
+        .from("tasks")
+        .select("id, title, description, status, priority, due_date")
+        .eq("project_id", project_id);
+    
+    workspace.currentProject["tasks"] = tasks_data;
+
+    return workspace.currentProject;
+}
+
+export async function createTask(new_task) {
+    const { data: task_data, error: task_error } = await supabase
+        .from("tasks")
+        .insert({
+            project_id: workspace.currentProject["id"],
+            creator_id: workspace.currentUser["id"],
+            activity_logs: [],
+            title: new_task.title,
+            description: new_task.description,
+            status: new_task.status,
+            priority: new_task.priority,
+            due_date: new_task.due_date
+        })
+        .select()
+        .single();
+    
+    if (task_error) {
+        console.log(task_error);
+        return false;
+    }
+
+    let assignment_entries = [];
+
+    for (let i = 0; i < new_task.assignees.length; i++) {
+        assignment_entries.push({
+            user_id: new_task.assignees[i],
+            task_id: task_data.id,
+            notifications: 0
+        });
+    }
+
+    const { error: assignments_error } = await supabase
+        .from("assignments")
+        .insert(assignment_entries);
+    
+    if (assignments_error) {
+        return false;
+    }
+
+    return true;
+}
+
+export async function updateTaskStatus(task_id, status) {
+    const { error: task_error } = await supabase
+        .from("tasks")
+        .update({
+            status: status
+        })
+        .eq("id", task_id);
+    
+    if (task_error) {
         return false;
     }
 
