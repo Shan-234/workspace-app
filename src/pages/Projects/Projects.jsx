@@ -10,11 +10,12 @@ import {
     FileText,
     X
 } from "lucide-react";
-import { supabase, retrieveTeam, workspace, createProject, retrieveProject, retrieveAccount } from "../../lib/Supabase/supabase";
+import { supabase, retrieveTeam, workspace, createProject, retrieveProject, retrieveAccount, retrieveTask, updateTask, deleteTask } from "../../lib/Supabase/supabase";
 import TeamSelector from "../../components/TeamSelector/TeamSelector";
 import ProjectPreview from "../../components/ProjectPreview/ProjectPreview";
 import Board from "../../components/Board/Board";
 import "./Projects.css";
+import TaskDetails from "../../components/TaskDetails/TaskDetails";
 
 async function getSessionId() {
     const {
@@ -49,6 +50,9 @@ export default function Projects() {
     const [loadingProject, setLoadingProject] = useState(false);
     const [projectNameInput, setProjectNameInput] = useState("");
     const [projectDescription, setProjectDescription] = useState("");
+
+    const [loadingTask, setLoadingTask] = useState(false);
+    const [openTaskDetails, setOpenTaskDetails] = useState(false);
 
     useEffect(() => {
         async function getUser() {
@@ -162,7 +166,7 @@ export default function Projects() {
                 }
             )
             .subscribe((status) => {
-                console.log("Realtime status:", status);
+                console.log("Projects Realtime status:", status);
             });
 
         return () => {
@@ -185,12 +189,18 @@ export default function Projects() {
     const projectName =
         currentProject?.name ?? "Select a project";
 
+    const onTeamChange = (id) => {
+        navigate("/projects/" + id);
+    };
+
     const handleProjectSelect = (projectId) => {
         setLoadingProject(true);
         retrieveProject(projectId).then((current_project) => {
             setLoadingProject(false);
             setCurrentProject(current_project);
             setAddProject(false);
+            setOpenTaskDetails(false);
+            workspace.currentTask = null;
         });
     };
 
@@ -264,11 +274,68 @@ export default function Projects() {
     };
 
     const handleTaskSettings = (taskId) => {
-        console.log("Task settings:", taskId);
+        console.log("Opening Task settings...");
+        setLoadingTask(true);
+
+        retrieveTask(taskId).then((success) => {
+            setLoadingTask(false);
+            setOpenTaskDetails(true);
+        });
     };
 
     const handleProjectSettings = () => {
         console.log("Project settings:", selectedProjectId);
+    };
+
+    const handleSaveTaskDetails = (task_updated) => {
+        updateTask(task_updated).then((success) => {
+            if (success) {
+                workspace.currentTask = null;
+
+                for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+                    if (workspace.currentProject["tasks"][i]["id"] === task_updated.id) {
+                        workspace.currentProject["tasks"][i]["title"] = task_updated.title;
+                        workspace.currentProject["tasks"][i]["description"] = task_updated.description;
+                        workspace.currentProject["tasks"][i]["status"] = task_updated.status;
+                        workspace.currentProject["tasks"][i]["priority"] = task_updated.priority;
+                        workspace.currentProject["tasks"][i]["due_date"] = task_updated.due_date;
+                        break;
+                    }
+                }
+
+                setOpenTaskDetails(false);
+                setCurrentProject(workspace.currentProject);
+            } else {
+                console.error("Error updating task!");
+            }
+        });
+    };
+
+    const handleDeleteTask = (task_id) => {
+        deleteTask(task_id).then((success) => {
+            if (success) {
+                console.log("Successfully Deleted Task!");
+                workspace.currentTask = null;
+
+                for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+                    if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                        workspace.currentProject["tasks"].splice(i, 1);
+                        break;
+                    }
+                }
+
+                setOpenTaskDetails(false);
+                setCurrentProject(workspace.currentProject);
+            } else {
+                console.error("Error deleting task!");
+            }
+        });
+    };
+
+    const handleCancelTaskDetails = (event) => {
+        workspace.currentTask = null;
+        setOpenTaskDetails(false);
+        setCurrentProject(workspace.currentProject);
     };
 
     let board = (
@@ -290,6 +357,18 @@ export default function Projects() {
             </div>
         </div>
     );
+
+    if (currentProject) {
+        board = (
+            <Board
+                key={selectedProjectId ?? "empty"}
+                project_name={projectName}
+                onAddTask={handleAddTask}
+                onTaskSettings={handleTaskSettings}
+                onProjectSettings={handleProjectSettings}
+            />
+        );
+    }
 
     if (loading) {
         return (
@@ -314,15 +393,16 @@ export default function Projects() {
         );
     }
 
-    if (currentProject) {
+    if (openTaskDetails) {
+        console.log("Rendering TaskDetails Component");
         board = (
-            <Board
-                key={selectedProjectId ?? "empty"}
-                project_name={projectName}
-                onAddTask={handleAddTask}
-                onTaskSettings={handleTaskSettings}
-                onProjectSettings={handleProjectSettings}
-            />
+            <div className="project-task-details">
+                <TaskDetails
+                    onCancel={handleCancelTaskDetails}
+                    onSaveChanges={handleSaveTaskDetails}
+                    onDeleteTask={handleDeleteTask}
+                />
+            </div>
         );
     }
 
@@ -490,14 +570,28 @@ export default function Projects() {
         );
     }
 
+    if (loadingTask) {
+        console.log("Loading Task...");
+        board = (
+            <div className="projects-loading">
+                <div className="projects-loading-content">
+                    <div className="projects-loading-spinner"></div>
+                    <h2>WORKSPACE</h2>
+                    <p>Loading task details...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="projects-page">
             <aside className="projects-sidebar">
                 <div className="projects-sidebar-header">
                     <TeamSelector
-                        id={currentTeam.id}
+                        id={currentTeam.team_id}
                         name={currentTeam.name ?? "Unnamed Team"}
                         onSettings={handleTeamSettings}
+                        onTeamChange={onTeamChange}
                     />
 
                     <div className="projects-sidebar-search-row">

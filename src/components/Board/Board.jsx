@@ -95,8 +95,26 @@ export default function Board({
                         if (workspace.currentProject["tasks"][i]["id"] === task_id) {
                             if (workspace.currentProject["tasks"][i]["status"] !== payload.new.status) {
                                 moveTask(task_id, payload.new.status);
-                                break;
                             }
+
+                            if (workspace.currentProject["tasks"][i]["title"] !== payload.new.title) {
+                                changeTaskTitle(task_id, payload.new.title);
+                            }
+
+                            if (workspace.currentProject["tasks"][i]["description"] !== payload.new.description) {
+                                changeTaskDescription(task_id, payload.new.description);
+                            }
+
+                            if (workspace.currentProject["tasks"][i]["due_date"] !== payload.new.due_date) {
+                                changeTaskDueDate(task_id, payload.new.due_date);
+                            }
+
+                            if (workspace.currentProject["tasks"][i]["priority"] !== payload.new.priority) {
+                                changeTaskPriority(task_id, payload.new.priority);
+                            }
+
+                            setNum(prev => (prev + 1) % 10);
+                            break;
                         }
                     }
                 }
@@ -122,8 +140,24 @@ export default function Board({
                     setNum(prev => (prev + 1) % 10);
                 }
             )
+            .on(
+                "broadcast",
+                {
+                    event: "task_deleted"
+                },
+                ({ payload }) => {
+                    console.log("Task deleted:", payload.task_id);
+                    for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+                        if (workspace.currentProject["tasks"][i]["id"] === payload.task_id) {
+                            workspace.currentProject["tasks"].splice(i, 1);
+                            break;
+                        }
+                    }
+                    setNum(prev => (prev + 1) % 10);
+                }
+            )
             .subscribe((status) => {
-                console.log("Realtime status:", status);
+                console.log("Board Realtime status:", status);
             });
 
         return () => {
@@ -234,11 +268,49 @@ export default function Board({
                 break;
             }
         }
+    };
 
-        setNum(prev => (prev + 1) % 10);
+    const changeTaskTitle = (task_id, new_title) => {
+        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                workspace.currentProject["tasks"][i]["title"] = new_title;
+                break;
+            }
+        }
+    };
+
+    const changeTaskDescription = (task_id, new_description) => {
+        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                workspace.currentProject["tasks"][i]["description"] = new_description;
+                break;
+            }
+        }
+    };
+
+    const changeTaskDueDate = (task_id, new_due_date) => {
+        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                workspace.currentProject["tasks"][i]["due_date"] = new_due_date;
+                break;
+            }
+        }
+    };
+
+    const changeTaskPriority = (task_id, new_priority) => {
+        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                workspace.currentProject["tasks"][i]["priority"] = new_priority;
+                break;
+            }
+        }
     };
 
     const onTaskClick = (event) => {
+        if (event.target.closest("button")) {
+            return;
+        }
+
         selectedCard.current = event.currentTarget;
 
         const rect =

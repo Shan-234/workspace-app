@@ -129,3 +129,45 @@
         font-size: 11px;
     }
 }
+
+
+.project-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.project-preview-avatar {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4776e6, #8e54e9);
+    color: #ffffff;
+
+    font-size: 17px;
+    font-weight: 600;
+    user-select: none;
+}
+
+.project-preview-content {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.project-preview-name,
+.project-preview-log {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-preview-notifications {
+    flex-shrink: 0;
+}

@@ -68,8 +68,7 @@ export default function Card({
     }
 
     function handleSettingsClick(event) {
-        event.stopPropagation();
-        onSettings?.(id);
+        onSettings(id);
     }
 
     return (

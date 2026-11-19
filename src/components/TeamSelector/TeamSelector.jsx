@@ -2,15 +2,26 @@
 import { useState } from "react";
 import { Settings, ChevronDown } from "lucide-react";
 import "./TeamSelector.css";
+import { workspace } from "../../lib/Supabase/supabase";
 
 export default function TeamSelector({
     id,
     name,
     onSettings,
-    onTeamChange,
-    teams = []
+    onTeamChange
 }) {
     const [isOpen, setIsOpen] = useState(false);
+    const teams = [];
+
+    for (const [team_id, team] of Object.entries(workspace.currentUser["user_teams"])) {
+        if (team_id != id) {
+            teams.push({
+                id: team_id,
+                name: team.name,
+                notifications: team.notifications
+            });
+        }
+    }
 
     return (
         <div className="team-selector-container">

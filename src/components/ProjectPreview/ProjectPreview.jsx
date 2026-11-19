@@ -9,6 +9,8 @@ export default function ProjectPreview({
     selected = false,
     onClick
 }) {
+    const initial = name?.trim().charAt(0).toUpperCase() || "?";
+
     return (
         <button
             type="button"
@@ -16,6 +18,10 @@ export default function ProjectPreview({
             onClick={() => onClick?.(id)}
             aria-pressed={selected}
         >
+            <div className="project-preview-avatar" aria-hidden="true">
+                {initial}
+            </div>
+
             <div className="project-preview-content">
                 <h3 className="project-preview-name" title={name}>
                     {name}
