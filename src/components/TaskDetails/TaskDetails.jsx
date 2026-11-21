@@ -1,8 +1,17 @@
 
-import { useEffect, useState } from "react";
-import { supabase, workspace } from "../../lib/Supabase/supabase";
-import "./TaskDetails.css";
+import { useEffect, useRef, useState } from "react";
+import {
+    refreshActivityLogs,
+    refreshComments,
+    resetCommentNotifications,
+    resetLogNotifications,
+    supabase,
+    workspace
+} from "../../lib/Supabase/supabase";
+
 import Comments from "../Comments/Comments";
+import ActivityLogs from "../ActivityLogs/ActivityLogs";
+import "./TaskDetails.css";
 
 const STATUS_OPTIONS = [
     { value: "todo", label: "To Do" },
@@ -38,6 +47,10 @@ export default function TaskDetails({
     onDeleteTask,
     onCancel
 }) {
+    const taskId = workspace.currentTask?.id;
+    const projectId = workspace.currentProject?.id;
+    const userId = workspace.currentUser?.id;
+
     const [task, setTask] = useState(() =>
         createDraft(workspace.currentTask)
     );
@@ -47,7 +60,172 @@ export default function TaskDetails({
     const [deleteConfirmation, setDeleteConfirmation] = useState(false);
     const [taskDeleted, setTaskDeleted] = useState(false);
 
+    const [activeActivityTab, setActiveActivityTab] = useState("comments");
+
+    const [logNotifications, setLogNotifications] = useState(
+        workspace.currentTask?.log_notifications ?? 0
+    );
+
+    const [commentNotifications, setCommentNotifications] = useState(
+        workspace.currentTask?.comment_notifications ?? 0
+    );
+
+    const activeTabRef = useRef(activeActivityTab);
+    activeTabRef.current = activeActivityTab;
+
+    const resettingRef = useRef({
+        activity: false,
+        comments: false
+    });
+
+    const resetVersionRef = useRef({
+        activity: 0,
+        comments: 0
+    });
+
+    const markReadRef = useRef(null);
+
     useEffect(() => {
+        setTask(createDraft(workspace.currentTask));
+
+        setShowAssignees(false);
+        setShowLabels(false);
+        setDeleteConfirmation(false);
+        setTaskDeleted(false);
+
+        activeTabRef.current = "comments";
+        setActiveActivityTab("comments");
+
+        setLogNotifications(
+            workspace.currentTask?.log_notifications ?? 0
+        );
+
+        setCommentNotifications(
+            workspace.currentTask?.comment_notifications ?? 0
+        );
+
+        resettingRef.current = {
+            activity: false,
+            comments: false
+        };
+
+        resetVersionRef.current = {
+            activity: 0,
+            comments: 0
+        };
+    }, [taskId]);
+
+    useEffect(() => {
+        if (!taskId || !userId) {
+            return;
+        }
+
+        let disposed = false;
+
+        async function markRead(tab) {
+            if (disposed || resettingRef.current[tab]) {
+                return;
+            }
+
+            resettingRef.current[tab] = true;
+
+            const version = resetVersionRef.current[tab];
+
+            try {
+                const success =
+                    tab === "activity"
+                        ? await resetLogNotifications()
+                        : await resetCommentNotifications();
+
+                if (!success) {
+                    console.error(
+                        `Error resetting ${tab} notifications!`
+                    );
+                    return;
+                }
+
+                if (
+                    !disposed &&
+                    resetVersionRef.current[tab] === version
+                ) {
+                    if (tab === "activity") {
+                        setLogNotifications(0);
+                    } else {
+                        setCommentNotifications(0);
+                    }
+                }
+            } catch (error) {
+                console.error(
+                    `Error resetting ${tab} notifications:`,
+                    error
+                );
+            } finally {
+                resettingRef.current[tab] = false;
+            }
+        }
+
+        async function handleAssignmentUpdate(payload) {
+            if (disposed) {
+                return;
+            }
+
+            const updated = payload.new;
+
+            if (
+                !updated ||
+                updated.task_id !== taskId ||
+                updated.user_id !== userId
+            ) {
+                return;
+            }
+
+            const nextLogs = updated.log_notifications ?? 0;
+            const nextComments = updated.comment_notifications ?? 0;
+
+            resetVersionRef.current.activity += 1;
+            resetVersionRef.current.comments += 1;
+
+            setLogNotifications(nextLogs);
+            setCommentNotifications(nextComments);
+
+            const tab = activeTabRef.current;
+
+            try {
+                await Promise.all([
+                    refreshActivityLogs(),
+                    refreshComments()
+                ]);
+            } catch (error) {
+                console.error(
+                    "Error refreshing task activity:",
+                    error
+                );
+                return;
+            }
+
+            if (disposed) {
+                return;
+            }
+
+            if (
+                tab === "activity" &&
+                activeTabRef.current === "activity" &&
+                nextLogs > 0
+            ) {
+                void markRead("activity");
+            }
+
+            if (
+                tab === "comments" &&
+                activeTabRef.current === "comments" &&
+                nextComments > 0
+            ) {
+                void markRead("comments");
+            }
+        }
+
+        markReadRef.current = markRead;
+
         const channel = supabase
             .channel(`project-${workspace.currentProject["id"]}`)
             .on(
@@ -56,26 +234,93 @@ export default function TaskDetails({
                     event: "task_deleted"
                 },
                 ({ payload }) => {
-                    if ((workspace.currentTask) && (workspace.currentTask["id"] === payload.task_id)) {
-                        console.log("This task has been deleted!");
-                        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-                            if (workspace.currentProject["tasks"][i]["id"] === payload.task_id) {
-                                workspace.currentProject["tasks"].splice(i, 1);
-                                break;
-                            }
-                        }
-                        setTaskDeleted(true);
+                    if (payload.task_id !== taskId) {
+                        return;
                     }
+
+                    const project = workspace.currentProject;
+
+                    if (project?.id === projectId) {
+                        const index = project.tasks?.findIndex(
+                            (item) => item.id === taskId
+                        );
+
+                        if (index >= 0) {
+                            project.tasks.splice(index, 1);
+                        }
+                    }
+
+                    setTaskDeleted(true);
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "assignments",
+                    filter: `user_id=eq.${userId}`
+                },
+                (payload) => {
+                    void handleAssignmentUpdate(payload);
                 }
             )
             .subscribe((status) => {
-                console.log("Task Details Realtime status:", status);
+                console.log(
+                    "Task Details Realtime status:",
+                    status
+                );
             });
-        
+
+        void refreshComments()
+            .then((success) => {
+                if (
+                    success &&
+                    !disposed &&
+                    activeTabRef.current === "comments"
+                ) {
+                    void markRead("comments");
+                }
+            })
+            .catch((error) => {
+                console.error(
+                    "Error loading initial comments:",
+                    error
+                );
+            });
+
         return () => {
-            supabase.removeChannel(channel);
+            disposed = true;
+            markReadRef.current = null;
+            void supabase.removeChannel(channel);
         };
-    }, []);
+    }, [taskId, projectId, userId]);
+
+    function selectActivityTab(tab) {
+        activeTabRef.current = tab;
+        setActiveActivityTab(tab);
+
+        const refresh =
+            tab === "activity"
+                ? refreshActivityLogs
+                : refreshComments;
+
+        void refresh()
+            .then((success) => {
+                if (
+                    success &&
+                    activeTabRef.current === tab
+                ) {
+                    void markReadRef.current?.(tab);
+                }
+            })
+            .catch((error) => {
+                console.error(
+                    "Error opening activity tab:",
+                    error
+                );
+            });
+    }
 
     const availableMembers =
         workspace.currentTeam?.team_members ?? [];
@@ -140,7 +385,9 @@ export default function TaskDetails({
             return;
         }
 
-        if (!workspace.currentTask) return;
+        if (!workspace.currentTask) {
+            return;
+        }
 
         Object.assign(workspace.currentTask, {
             title: task.title.trim(),
@@ -156,11 +403,18 @@ export default function TaskDetails({
 
         onSaveChanges(task);
 
-        console.log("Updated task:", workspace.currentTask);
+        console.log(
+            "Updated task:",
+            workspace.currentTask
+        );
     }
 
     function handleDelete() {
-        console.log("Delete requested for task:", task.id);
+        console.log(
+            "Delete requested for task:",
+            task.id
+        );
+
         setDeleteConfirmation(false);
         onDeleteTask(task.id);
     }
@@ -178,7 +432,9 @@ export default function TaskDetails({
             <section className="task-details-editor">
                 <header className="task-details-heading">
                     <h2>Edit Task</h2>
-                    <p>Manage task information and assignments</p>
+                    <p>
+                        Manage task information and assignments
+                    </p>
                 </header>
 
                 <div className="task-details-form">
@@ -325,7 +581,9 @@ export default function TaskDetails({
                                         type="button"
                                         className="task-details-add-button"
                                         onClick={() => {
-                                            setShowAssignees((value) => !value);
+                                            setShowAssignees(
+                                                (value) => !value
+                                            );
                                             setShowLabels(false);
                                         }}
                                     >
@@ -339,33 +597,35 @@ export default function TaskDetails({
                                                     No members available
                                                 </p>
                                             ) : (
-                                                availableMembers.map((member) => {
-                                                    const selected =
-                                                        task.assignees.some(
-                                                            (assignee) =>
-                                                                assignee.id === member.id
-                                                        );
+                                                availableMembers.map(
+                                                    (member) => {
+                                                        const selected =
+                                                            task.assignees.some(
+                                                                (assignee) =>
+                                                                    assignee.id === member.id
+                                                            );
 
-                                                    return (
-                                                        <button
-                                                            type="button"
-                                                            key={member.id}
-                                                            onClick={() =>
-                                                                toggleAssignee(member)
-                                                            }
-                                                        >
-                                                            <span>
-                                                                {member.username}
-                                                            </span>
-
-                                                            {selected && (
-                                                                <span className="task-details-check">
-                                                                    ✓
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={member.id}
+                                                                onClick={() =>
+                                                                    toggleAssignee(member)
+                                                                }
+                                                            >
+                                                                <span>
+                                                                    {member.username}
                                                                 </span>
-                                                            )}
-                                                        </button>
-                                                    );
-                                                })
+
+                                                                {selected && (
+                                                                    <span className="task-details-check">
+                                                                        ✓
+                                                                    </span>
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    }
+                                                )
                                             )}
                                         </div>
                                     )}
@@ -407,7 +667,9 @@ export default function TaskDetails({
                                         type="button"
                                         className="task-details-add-button"
                                         onClick={() => {
-                                            setShowLabels((value) => !value);
+                                            setShowLabels(
+                                                (value) => !value
+                                            );
                                             setShowAssignees(false);
                                         }}
                                     >
@@ -421,32 +683,34 @@ export default function TaskDetails({
                                                     No labels available
                                                 </p>
                                             ) : (
-                                                availableLabels.map((label) => {
-                                                    const selected =
-                                                        task.label_ids.includes(
-                                                            label.id
-                                                        );
+                                                availableLabels.map(
+                                                    (label) => {
+                                                        const selected =
+                                                            task.label_ids.includes(
+                                                                label.id
+                                                            );
 
-                                                    return (
-                                                        <button
-                                                            type="button"
-                                                            key={label.id}
-                                                            onClick={() =>
-                                                                toggleLabel(label.id)
-                                                            }
-                                                        >
-                                                            <span>
-                                                                {label.name}
-                                                            </span>
-
-                                                            {selected && (
-                                                                <span className="task-details-check">
-                                                                    ✓
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={label.id}
+                                                                onClick={() =>
+                                                                    toggleLabel(label.id)
+                                                                }
+                                                            >
+                                                                <span>
+                                                                    {label.name}
                                                                 </span>
-                                                            )}
-                                                        </button>
-                                                    );
-                                                })
+
+                                                                {selected && (
+                                                                    <span className="task-details-check">
+                                                                        ✓
+                                                                    </span>
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    }
+                                                )
                                             )}
                                         </div>
                                     )}
@@ -460,7 +724,9 @@ export default function TaskDetails({
                     <button
                         type="button"
                         className="task-details-delete"
-                        onClick={() => setDeleteConfirmation(true)}
+                        onClick={() =>
+                            setDeleteConfirmation(true)
+                        }
                     >
                         Delete Task
                     </button>
@@ -486,7 +752,80 @@ export default function TaskDetails({
             </section>
 
             <section className="task-details-activity">
-                <Comments />
+                <div
+                    className="task-details-activity-tabs"
+                    role="tablist"
+                    aria-label="Task activity"
+                >
+                    <button
+                        type="button"
+                        role="tab"
+                        id="task-comments-tab"
+                        aria-selected={
+                            activeActivityTab === "comments"
+                        }
+                        aria-controls="task-activity-panel"
+                        className={
+                            activeActivityTab === "comments"
+                                ? "active"
+                                : ""
+                        }
+                        onClick={() =>
+                            selectActivityTab("comments")
+                        }
+                    >
+                        <span>Comments</span>
+
+                        {commentNotifications > 0 && (
+                            <span className="task-details-notification-badge">
+                                {commentNotifications}
+                            </span>
+                        )}
+                    </button>
+
+                    <button
+                        type="button"
+                        role="tab"
+                        id="task-logs-tab"
+                        aria-selected={
+                            activeActivityTab === "activity"
+                        }
+                        aria-controls="task-activity-panel"
+                        className={
+                            activeActivityTab === "activity"
+                                ? "active"
+                                : ""
+                        }
+                        onClick={() =>
+                            selectActivityTab("activity")
+                        }
+                    >
+                        <span>Activity Logs</span>
+
+                        {logNotifications > 0 && (
+                            <span className="task-details-notification-badge">
+                                {logNotifications}
+                            </span>
+                        )}
+                    </button>
+                </div>
+
+                <div
+                    id="task-activity-panel"
+                    className="task-details-activity-panel"
+                    role="tabpanel"
+                    aria-labelledby={
+                        activeActivityTab === "comments"
+                            ? "task-comments-tab"
+                            : "task-logs-tab"
+                    }
+                >
+                    {activeActivityTab === "comments" ? (
+                        <Comments key={`comments-${taskId}`} />
+                    ) : (
+                        <ActivityLogs key={`logs-${taskId}`} />
+                    )}
+                </div>
             </section>
 
             {deleteConfirmation && (
@@ -535,14 +874,15 @@ export default function TaskDetails({
                         className="task-details-confirm-dialog"
                         role="dialog"
                         aria-modal="true"
-                        aria-labelledby="task-delete-heading"
+                        aria-labelledby="task-deleted-heading"
                     >
-                        <h3 id="task-delete-heading">
+                        <h3 id="task-deleted-heading">
                             Task Deleted
                         </h3>
 
                         <p>
-                            This task has been deleted and is no longer available.
+                            This task has been deleted and is no longer
+                            available.
                         </p>
 
                         <div className="task-details-confirm-actions">

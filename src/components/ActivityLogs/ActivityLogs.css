@@ -1,0 +1,367 @@
+
+.activity-logs {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+
+    background: transparent;
+    color: #e2e8f0;
+
+    font-family: inherit;
+}
+
+/* Header */
+
+.activity-logs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    padding: 22px 24px 20px;
+    flex-shrink: 0;
+
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.activity-logs-header h2 {
+    margin: 0;
+
+    color: #f1f5f9;
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -0.35px;
+    line-height: 1.4;
+}
+
+.activity-logs-header p {
+    margin: 5px 0 0;
+
+    color: #94a3b8;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* Event count */
+
+.activity-logs-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 6px 11px;
+    flex-shrink: 0;
+
+    border: 1px solid rgba(129, 140, 248, 0.18);
+    border-radius: 8px;
+
+    background: rgba(99, 102, 241, 0.09);
+    color: #a5b4fc;
+
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Scrollable content */
+
+.activity-logs-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 8px 24px 28px;
+
+    scrollbar-width: thin;
+    scrollbar-color:
+        rgba(148, 163, 184, 0.25)
+        transparent;
+}
+
+.activity-logs-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.activity-logs-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.activity-logs-content::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 10px;
+}
+
+.activity-logs-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.4);
+}
+
+/* Date groups */
+
+.activity-logs-group {
+    margin: 0;
+    padding: 0;
+}
+
+.activity-logs-date {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    margin: 24px 0 20px;
+}
+
+.activity-logs-date span {
+    flex-shrink: 0;
+
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.activity-logs-date::after {
+    content: "";
+
+    height: 1px;
+    flex: 1;
+
+    background: linear-gradient(
+        to right,
+        rgba(148, 163, 184, 0.2),
+        rgba(148, 163, 184, 0.03)
+    );
+}
+
+/* Timeline */
+
+.activity-logs-timeline {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    padding-left: 0;
+}
+
+/* Vertical connector */
+
+.activity-logs-timeline::before {
+    content: "";
+
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 17px;
+
+    width: 1px;
+
+    background: linear-gradient(
+        to bottom,
+        rgba(129, 140, 248, 0.35),
+        rgba(148, 163, 184, 0.12)
+    );
+}
+
+/* Individual entry */
+
+.activity-logs-entry {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+
+    padding: 0 0 24px;
+}
+
+.activity-logs-entry:last-child {
+    padding-bottom: 4px;
+}
+
+/* Icon containers */
+
+.activity-logs-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 35px;
+    height: 35px;
+    flex-shrink: 0;
+
+    border: 1px solid transparent;
+    border-radius: 11px;
+
+    background: #1e293b;
+    color: #94a3b8;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.activity-logs-entry:hover .activity-logs-icon {
+    transform: scale(1.05);
+}
+
+/* New task */
+
+.activity-logs-icon.blue {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.18);
+    color: #60a5fa;
+}
+
+/* Description updated */
+
+.activity-logs-icon.purple {
+    background: rgba(168, 85, 247, 0.12);
+    border-color: rgba(168, 85, 247, 0.18);
+    color: #c084fc;
+}
+
+/* Priority changed */
+
+.activity-logs-icon.orange {
+    background: rgba(249, 115, 22, 0.12);
+    border-color: rgba(249, 115, 22, 0.18);
+    color: #fb923c;
+}
+
+/* Status changed */
+
+.activity-logs-icon.green {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.18);
+    color: #4ade80;
+}
+
+/* Due date changed */
+
+.activity-logs-icon.pink {
+    background: rgba(236, 72, 153, 0.12);
+    border-color: rgba(236, 72, 153, 0.18);
+    color: #f472b6;
+}
+
+/* Unknown event */
+
+.activity-logs-icon.gray {
+    background: rgba(148, 163, 184, 0.1);
+    border-color: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+}
+
+/* Entry content */
+
+.activity-logs-entry-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    flex: 1;
+    min-width: 0;
+
+    padding-top: 2px;
+}
+
+.activity-logs-entry-content p {
+    margin: 0;
+
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.65;
+
+    overflow-wrap: anywhere;
+}
+
+.activity-logs-entry-content time {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* Hover interaction */
+
+.activity-logs-entry:hover .activity-logs-entry-content p {
+    color: #f1f5f9;
+}
+
+/* Empty state */
+
+.activity-logs-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+
+    min-height: 260px;
+    height: 100%;
+
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.activity-logs-empty svg {
+    color: #64748b;
+    opacity: 0.65;
+}
+
+.activity-logs-empty p {
+    margin: 0;
+
+    color: #94a3b8;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Responsive adjustments */
+
+@media (max-width: 768px) {
+    .activity-logs-header {
+        padding: 18px 16px;
+    }
+
+    .activity-logs-header h2 {
+        font-size: 15px;
+    }
+
+    .activity-logs-header p {
+        font-size: 11px;
+    }
+
+    .activity-logs-count {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+
+    .activity-logs-content {
+        padding: 6px 16px 24px;
+    }
+
+    .activity-logs-entry {
+        gap: 12px;
+        padding-bottom: 20px;
+    }
+
+    .activity-logs-entry-content p {
+        font-size: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .activity-logs-icon,
+    .activity-logs-entry-content p {
+        transition: none;
+    }
+}

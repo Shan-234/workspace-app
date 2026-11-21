@@ -372,7 +372,8 @@ export async function createTask(new_task) {
             description: new_task.description,
             status: new_task.status,
             priority: new_task.priority,
-            due_date: new_task.due_date
+            due_date: new_task.due_date,
+            last_updated_by: workspace.currentUser["id"]
         })
         .select()
         .single();
@@ -388,15 +389,22 @@ export async function createTask(new_task) {
         assignment_entries.push({
             user_id: new_task.assignees[i],
             task_id: task_data.id,
-            notifications: 0
+            project_id: workspace.currentProject["id"],
+            team_id: workspace.currentTeam["team_id"],
+            log_notifications: 0,
+            comment_notifications: 0
         });
     }
 
     const { error: assignments_error } = await supabase
         .from("assignments")
-        .insert(assignment_entries);
+        .upsert(assignment_entries, {
+            onConflict: "user_id,task_id",
+            ignoreDuplicates: true
+        });
     
     if (assignments_error) {
+        console.error(assignments_error);
         return false;
     }
 
@@ -426,6 +434,25 @@ export async function retrieveTask(task_id) {
     }
 
     task_data["creator_username"] = creator_data.username;
+
+    const { data: notifications_data, error: notifications_error } = await supabase
+        .from("assignments")
+        .select("log_notifications", "comment_notifications")
+        .eq("user_id", workspace.currentUser["id"])
+        .eq("task_id", task_id);
+    
+    if (notifications_error) {
+        console.error(notifications_error);
+        return false;
+    }
+
+    if (notifications_data.length) {
+        task_data["log_notifications"] = notifications_data[0].log_notifications;
+        task_data["comment_notifications"] = notifications_data[0].comment_notifications;
+    } else {
+        task_data["log_notifications"] = 0;
+        task_data["comment_notifications"] = 0;
+    }
 
     const { data: assignments_data, error: assignments_error } = await supabase
         .from("assignments")
@@ -483,7 +510,8 @@ export async function updateTaskStatus(task_id, status) {
     const { error: task_error } = await supabase
         .from("tasks")
         .update({
-            status: status
+            status: status,
+            last_updated_by: workspace.currentUser["id"]
         })
         .eq("id", task_id);
     
@@ -502,7 +530,8 @@ export async function updateTask(task_updated) {
             description: task_updated.description,
             status: task_updated.status,
             priority: task_updated.priority,
-            due_date: task_updated.due_date
+            due_date: task_updated.due_date,
+            last_updated_by: workspace.currentUser["id"]
         })
         .eq("id", task_updated.id);
     
@@ -515,7 +544,11 @@ export async function updateTask(task_updated) {
     for (let i = 0; i < task_updated.assignees.length; i++) {
         assignments.push({
             user_id: task_updated.assignees[i].id,
-            task_id: task_updated.id
+            task_id: task_updated.id,
+            project_id: workspace.currentProject["id"],
+            team_id: workspace.currentTeam["team_id"],
+            log_notifications: 0,
+            comment_notfications: 0
         });
     }
 
@@ -591,6 +624,88 @@ export async function createNewComment(message) {
     }
 
     return comment_data;
+}
+
+export async function refreshActivityLogs() {
+    if (!workspace.currentTask) {
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from("tasks")
+        .select("activity_logs")
+        .eq("id", workspace.currentTask["id"])
+        .single();
+    
+    if (error) {
+        throw error;
+    }
+
+    workspace.currentTask["activity_logs"] = data.activity_logs;
+
+    return true;
+}
+
+export async function refreshComments() {
+    const { data, error } = await supabase
+        .from("comments")
+        .select("*")
+        .eq("task_id", workspace.currentTask["id"]);
+    
+    if (error) {
+        throw error;
+    }
+
+    workspace.currentTask["comments"] = [];
+
+    for (let i = 0; i < data.length; i++) {
+        workspace.currentTask["comments"].push({
+            "id": data[i].id,
+            "sender_username": data[i].creator_username,
+            "timestamp": data[i].created_at,
+            "message": data[i].comment
+        });
+    }
+
+    console.log(data);
+
+    return true;
+}
+
+export async function resetLogNotifications() {
+    const { error } = await supabase.rpc(
+        "reset_log_notifications",
+        {
+            p_task_id: workspace.currentTask["id"]
+        }
+    );
+    
+    if (error) {
+        console.error(error);
+        return false;
+    }
+
+    workspace.currentTask["log_notifications"] = 0;
+
+    return true;
+}
+
+export async function resetCommentNotifications() {
+    const { error } = await supabase.rpc(
+        "reset_comment_notifications",
+        {
+            p_task_id: workspace.currentTask["id"]
+        }
+    );
+    
+    if (error) {
+        console.error(error);
+        return false;
+    }
+
+    workspace.currentTask["comment_notifications"] = 0;
+
+    return true;
 }
 
 // Sample Data
@@ -892,6 +1007,8 @@ workspace.currentTask = {
     "priority": "high",
     "due_date": "2026-12-05",
     "creator_username": "user_432",
+    "comment_notifications": 0,
+    "log_notifications": 0,
     "assignees": [
         {
             "id": 1,
@@ -968,42 +1085,42 @@ workspace.currentTask = {
     "activity_logs": [
         {
             "timestamp": "2026-11-12 09:15:23",
+            "topic": "new_task",
             "message": "user_432 created the task."
         },
         {
             "timestamp": "2026-11-12 10:42:17",
+            "topic": "description",
             "message": "sarah_dev updated the task description."
         },
         {
             "timestamp": "2026-11-12 14:28:35",
+            "topic": "priority",
             "message": "dev_alex changed priority from Low to Medium."
         },
         {
-            "timestamp": "2026-11-13 08:56:12",
-            "message": "user_432 assigned dev_alex to the task."
-        },
-        {
             "timestamp": "2026-11-13 12:32:56",
+            "topic": "status",
             "message": "sarah_dev moved task from To Do -> In Progress."
         },
         {
             "timestamp": "2026-11-14 11:18:43",
+            "topic": "due_date",
             "message": "mike_tech updated the task's due date to November 18, 2026."
         },
         {
-            "timestamp": "2026-11-14 15:47:29",
-            "message": "dev_alex added user_108 as an assignee."
-        },
-        {
             "timestamp": "2026-11-15 09:23:51",
+            "topic": "status",
             "message": "dev_alex moved task from In Progress -> In Review."
         },
         {
             "timestamp": "2026-11-16 13:05:38",
+            "topic": "priority",
             "message": "sarah_dev changed priority from Medium to High."
         },
         {
             "timestamp": "2026-11-17 10:36:14",
+            "topic": "status",
             "message": "user_108 moved task from In Review -> Done."
         }
     ]
