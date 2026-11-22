@@ -1,15 +1,30 @@
 
+import { useEffect, useState } from "react";
 import "./ProjectPreview.css";
+import { getProjectNotifications, registerProjectNotificationHandler, workspace } from "../../lib/Supabase/supabase";
 
 export default function ProjectPreview({
     id = 0,
     name = "UnNamed",
-    notifications = 0,
     most_recent_log = "",
     selected = false,
     onClick
 }) {
+    const [notifications, setNotifications] = useState(0);
     const initial = name?.trim().charAt(0).toUpperCase() || "?";
+
+    useEffect(() => {
+        registerProjectNotificationHandler(
+            id,
+            (num) => {
+                setNotifications(num);
+            }
+        );
+
+        getProjectNotifications(id).then((result) => {
+            setNotifications(result);
+        });
+    }, []);
 
     return (
         <button
@@ -26,13 +41,6 @@ export default function ProjectPreview({
                 <h3 className="project-preview-name" title={name}>
                     {name}
                 </h3>
-
-                <p
-                    className="project-preview-log"
-                    title={most_recent_log}
-                >
-                    {most_recent_log || "No recent activity"}
-                </p>
             </div>
 
             {notifications > 0 && (

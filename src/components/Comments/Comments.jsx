@@ -57,6 +57,15 @@ export default function Comments() {
         workspace.currentUser?.username ?? "You";
 
     useEffect(() => {
+        let assigned = false;
+
+        for (let i = 0; i < workspace.currentTask["assignees"].length; i++) {
+            if (workspace.currentTask["assignees"][i]["id"] === workspace.currentUser["id"]) {
+                assigned = true;
+                break;
+            }
+        }
+
         const channel = supabase
             .channel(`comments-task-${taskId}`)
             .on(
@@ -76,6 +85,27 @@ export default function Comments() {
                                 console.error("Error refreshing comments!");
                             }
                         });
+                    }
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "comments",
+                    filter: `task_id=eq.${taskId}`
+                },
+                (payload) => {
+                    if (!assigned && (payload.new.creator_id !== workspace.currentUser["id"])) {
+                        const new_comment = {
+                            "id": payload.new.id,
+                            "sender_username": payload.new.creator_username,
+                            "timestamp": payload.new.created_at,
+                            "message": payload.new.comment
+                        };
+
+                        setComments(previous => [...previous, new_comment]);
                     }
                 }
             )

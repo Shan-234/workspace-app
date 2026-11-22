@@ -36,8 +36,6 @@ const topicConfig = {
 };
 
 function parseTimestamp(timestamp) {
-    // Supports both PostgreSQL ISO timestamps and
-    // the "YYYY-MM-DD HH:mm:ss" sample format.
     return new Date(timestamp.replace(" ", "T"));
 }
 
@@ -60,6 +58,15 @@ export default function ActivityLogs() {
     const [num, setNum] = useState(0);
 
     useEffect(() => {
+        let assigned = false;
+
+        for (let i = 0; i < workspace.currentTask["assignees"].length; i++) {
+            if (workspace.currentTask["assignees"][i]["id"] === workspace.currentUser["id"]) {
+                assigned = true;
+                break;
+            }
+        }
+
         const channel = supabase
             .channel(`activity-logs-task-${workspace.currentTask["id"]}`)
             .on(
@@ -80,6 +87,26 @@ export default function ActivityLogs() {
                             }
                         });
                     }    
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "tasks",
+                    filter: `id=eq.${workspace.currentTask["id"]}`
+                },
+                (payload) => {
+                    if (!assigned) {
+                        refreshActivityLogs().then((success) => {
+                            if (success) {
+                                setNum(prev => (prev + 1) % 10);
+                            } else {
+                                console.error("Error refreshing activity logs!");
+                            }
+                        });
+                    }
                 }
             )
             .subscribe((status) => {

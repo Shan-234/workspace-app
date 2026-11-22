@@ -10,7 +10,7 @@ import {
     FileText,
     X
 } from "lucide-react";
-import { supabase, retrieveTeam, workspace, createProject, retrieveProject, retrieveAccount, retrieveTask, updateTask, deleteTask } from "../../lib/Supabase/supabase";
+import { supabase, retrieveTeam, workspace, createProject, retrieveProject, retrieveAccount, retrieveTask, updateTask, deleteTask, clearTaskNotificationHandlers, getProjectNotifications, clearProjectNotificationHandlers, clearTeamNotificationHandlers } from "../../lib/Supabase/supabase";
 import TeamSelector from "../../components/TeamSelector/TeamSelector";
 import ProjectPreview from "../../components/ProjectPreview/ProjectPreview";
 import Board from "../../components/Board/Board";
@@ -53,6 +53,8 @@ export default function Projects() {
 
     const [loadingTask, setLoadingTask] = useState(false);
     const [openTaskDetails, setOpenTaskDetails] = useState(false);
+
+    const [projectNotifications, setProjectNotifications] = useState({});
 
     useEffect(() => {
         async function getUser() {
@@ -190,7 +192,17 @@ export default function Projects() {
         currentProject?.name ?? "Select a project";
 
     const onTeamChange = (id) => {
+        clearTaskNotificationHandlers();
+        clearProjectNotificationHandlers();
+        clearTeamNotificationHandlers();
         navigate("/projects/" + id);
+    };
+
+    const onBackToDashboard = () => {
+        clearTaskNotificationHandlers();
+        clearProjectNotificationHandlers();
+        clearTeamNotificationHandlers();
+        navigate("/dashboard");
     };
 
     const handleProjectSelect = (projectId) => {
@@ -371,6 +383,8 @@ export default function Projects() {
     }
 
     if (loading) {
+        clearTaskNotificationHandlers();
+
         return (
             <main className="projects-loading">
                 <div className="projects-loading-content">
@@ -383,6 +397,8 @@ export default function Projects() {
     }
 
     if (error || !currentTeam) {
+        clearTaskNotificationHandlers();
+
         return (
             <main className="projects-loading">
                 <div className="projects-loading-content">
@@ -395,6 +411,8 @@ export default function Projects() {
 
     if (openTaskDetails) {
         console.log("Rendering TaskDetails Component");
+        clearTaskNotificationHandlers();
+
         board = (
             <div className="project-task-details">
                 <TaskDetails
@@ -407,6 +425,8 @@ export default function Projects() {
     }
 
     if (addProject) {
+        clearTaskNotificationHandlers();
+
         board = (
             <div className="projects-create-page">
                 <div className="projects-create-container">
@@ -547,6 +567,8 @@ export default function Projects() {
     }
 
     if (creatingProject) {
+        clearTaskNotificationHandlers();
+
         board = (
             <div className="projects-loading">
                 <div className="projects-loading-content">
@@ -559,6 +581,8 @@ export default function Projects() {
     }
 
     if (loadingProject) {
+        clearTaskNotificationHandlers();
+
         board = (
             <div className="projects-loading">
                 <div className="projects-loading-content">
@@ -572,6 +596,8 @@ export default function Projects() {
 
     if (loadingTask) {
         console.log("Loading Task...");
+        clearTaskNotificationHandlers();
+
         board = (
             <div className="projects-loading">
                 <div className="projects-loading-content">
@@ -587,6 +613,16 @@ export default function Projects() {
         <div className="projects-page">
             <aside className="projects-sidebar">
                 <div className="projects-sidebar-header">
+                    <button
+                        type="button"
+                        className="projects-back-dashboard"
+                        onClick={onBackToDashboard}
+                        title="Back to Dashboard"
+                    >
+                        <ArrowLeft size={15} strokeWidth={2} />
+                        <span>Back to Dashboard</span>
+                    </button>
+
                     <TeamSelector
                         id={currentTeam.team_id}
                         name={currentTeam.name ?? "Unnamed Team"}
@@ -639,7 +675,6 @@ export default function Projects() {
                                 key={project.id}
                                 id={project.id}
                                 name={project.name}
-                                notifications={project.notifications}
                                 most_recent_log={project.most_recent_log}
                                 selected={
                                     !addProject &&

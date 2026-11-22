@@ -712,3 +712,41 @@
     flex: 1;
     min-height: 0;
 }
+
+.projects-back-dashboard {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+    width: fit-content;
+    margin-bottom: 14px;
+    padding: 6px 9px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    color: #8794ad;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.projects-back-dashboard:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: #c7c7ff;
+}
+
+.projects-back-dashboard:focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: 2px;
+}
+
+.projects-back-dashboard svg {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.projects-back-dashboard:hover svg {
+    transform: translateX(-3px);
+}

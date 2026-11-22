@@ -1,7 +1,8 @@
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Settings2 } from "lucide-react";
 import "./Card.css";
+import { getTaskNotifications, registerTaskNotificationHandler } from "../../lib/Supabase/supabase";
 
 function getNumberOfDaysLeft(dueDate) {
     if (!dueDate) return null;
@@ -42,6 +43,7 @@ export default function Card({
 }) {
     const cardRef = useRef(null);
     const [dragWidth, setDragWidth] = useState(null);
+    const [notifications, setNotifications] = useState(0);
 
     const daysLeft = getNumberOfDaysLeft(due_date);
     const dueDateMessage = getDueDateMessage(daysLeft);
@@ -56,16 +58,20 @@ export default function Card({
                 ? "task-card-due-soon"
                 : "";
 
-    function handleDragStart() {
-        if (!cardRef.current) return;
+    useEffect(() => {
+        registerTaskNotificationHandler(
+            id,
+            (new_notifications) => {
+                setNotifications(new_notifications);
+            }
+        );
 
-        const width = cardRef.current.getBoundingClientRect().width;
-        setDragWidth(width);
-    }
-
-    function handleDragEnd() {
-        setDragWidth(null);
-    }
+        getTaskNotifications(id).then((result) => {
+            if (result) {
+                setNotifications(result);
+            }
+        });
+    }, []);
 
     function handleSettingsClick(event) {
         onSettings(id);
@@ -88,6 +94,12 @@ export default function Card({
                     : undefined
             }
         >
+            {notifications > 0 && (
+                <span className="task-card-notification-badge">
+                    {notifications}
+                </span>
+            )}
+
             <div className="task-card-header">
                 <span className="task-card-priority-dot" />
                 <h4 className="task-card-title">{title}</h4>

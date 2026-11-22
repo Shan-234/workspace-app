@@ -258,6 +258,45 @@ export default function TaskDetails({
                 {
                     event: "UPDATE",
                     schema: "public",
+                    table: "tasks",
+                    filter: `project_id=eq.${workspace.currentProject["id"]}`
+                },
+                (payload) => {
+                    console.log("Task Updated:", payload);
+                    const task_id = payload.old.id;
+
+                    for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+                        if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                            if (workspace.currentProject["tasks"][i]["status"] !== payload.new.status) {
+                                moveTask(task_id, payload.new.status);
+                            }
+
+                            if (workspace.currentProject["tasks"][i]["title"] !== payload.new.title) {
+                                changeTaskTitle(task_id, payload.new.title);
+                            }
+
+                            if (workspace.currentProject["tasks"][i]["description"] !== payload.new.description) {
+                                changeTaskDescription(task_id, payload.new.description);
+                            }
+
+                            if (workspace.currentProject["tasks"][i]["due_date"] !== payload.new.due_date) {
+                                changeTaskDueDate(task_id, payload.new.due_date);
+                            }
+
+                            if (workspace.currentProject["tasks"][i]["priority"] !== payload.new.priority) {
+                                changeTaskPriority(task_id, payload.new.priority);
+                            }
+                            
+                            break;
+                        }
+                    }
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
                     table: "assignments",
                     filter: `user_id=eq.${userId}`
                 },
@@ -295,6 +334,51 @@ export default function TaskDetails({
             void supabase.removeChannel(channel);
         };
     }, [taskId, projectId, userId]);
+
+    const moveTask = (task_id, new_status) => {
+        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                workspace.currentProject["tasks"][i]["status"] = new_status;
+                break;
+            }
+        }
+    };
+
+    const changeTaskTitle = (task_id, new_title) => {
+        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                workspace.currentProject["tasks"][i]["title"] = new_title;
+                break;
+            }
+        }
+    };
+
+    const changeTaskDescription = (task_id, new_description) => {
+        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                workspace.currentProject["tasks"][i]["description"] = new_description;
+                break;
+            }
+        }
+    };
+
+    const changeTaskDueDate = (task_id, new_due_date) => {
+        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                workspace.currentProject["tasks"][i]["due_date"] = new_due_date;
+                break;
+            }
+        }
+    };
+
+    const changeTaskPriority = (task_id, new_priority) => {
+        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
+            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                workspace.currentProject["tasks"][i]["priority"] = new_priority;
+                break;
+            }
+        }
+    };
 
     function selectActivityTab(tab) {
         activeTabRef.current = tab;
