@@ -5,7 +5,9 @@ import "./EditTeams.css";
 import { createNewTeam, joinExistingTeam, leaveTeam, workspace } from "../../lib/Supabase/supabase";
 import TeamCreated from "../TeamCreated/TeamCreated";
 
-export default function EditTeams() {
+export default function EditTeams({
+    onCancel
+}) {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState("create");
@@ -120,11 +122,11 @@ export default function EditTeams() {
     };
 
     const goToDashboard = () => {
-        navigate(-1);
+        onCancel();
     };
 
     const cancel = () => {
-        navigate(-1);
+        onCancel();
     };
 
     if (createdTeam) {

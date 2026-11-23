@@ -4,7 +4,7 @@ import Label from "../../components/Label/Label";
 import Team from "../../components/Team/Team";
 import "./Dashboard.css";
 import { useLocation, useNavigate } from "react-router";
-import { createAccount, editUsername, retrieveAccount, supabase, workspace } from "../../lib/Supabase/supabase";
+import { createAccount, editUsername, getUserProgress, retrieveAccount, supabase, workspace } from "../../lib/Supabase/supabase";
 import EditTeams from "../../components/EditTeams/EditTeams";
 
 function AnimatedPage({
@@ -152,7 +152,12 @@ export default function Dashboard() {
     const [username, setUsername] = useState("");
     const [userLabels, setUserLabels] = useState({});
     const [userTeams, setUserTeams] = useState({});
-    const [userProgress, setUserProgress] = useState({});
+    const [userProgress, setUserProgress] = useState({
+        tasks_completed: "...",
+        tasks_due_soon: "...",
+        tasks_overdue: "...",
+        tasks_total: "..."
+    });
     const [loading, setLoading] = useState(true);
 
     // Username dialog state
@@ -173,9 +178,13 @@ export default function Dashboard() {
 
     const initializeUserInformation = () => {
         setUsername(workspace.currentUser["username"]);
-        setUserProgress(workspace.currentUser["user_progress"]);
         setUserLabels(workspace.currentUser["user_labels"]);
         setUserTeams(workspace.currentUser["user_teams"]);
+
+        getUserProgress().then((result) => {
+            setUserProgress(result);
+        });
+
         setLoading(false);
     };
 
@@ -320,10 +329,6 @@ export default function Dashboard() {
         };
     }, [loading]);
 
-    const NavigateToProjects = (team_id) => {
-
-    };
-
     if (loading) {
         return (
             <main className="dashboard-loading">
@@ -337,7 +342,7 @@ export default function Dashboard() {
     }
 
     if (editTeams) {
-        return <EditTeams />;
+        return <EditTeams onCancel={() => { window.location.reload() }} />;
     }
 
     return (
@@ -565,7 +570,6 @@ export default function Dashboard() {
                                                     key={team.id}
                                                     id={team.id}
                                                     name={team.name}
-                                                    notifications={team.notifications}
                                                 />
                                             )}
                                         />

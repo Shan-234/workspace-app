@@ -242,6 +242,62 @@ export async function editUsername(new_username) {
     return true;
 }
 
+export async function getUserProgress() {
+    const { data: user_data, error: user_error } = await supabase
+        .from("assignments")
+        .select("task_id")
+        .eq("user_id", workspace.currentUser["id"]);
+    
+    if (user_error) {
+        throw user_error;
+    }
+
+    const task_ids = user_data.map(item => item.task_id);
+
+    const { data: tasks_data, error: tasks_error } = await supabase
+        .from("tasks")
+        .select("id, status, due_date")
+        .in("id", task_ids);
+    
+    if (tasks_error) {
+        throw tasks_error;
+    }
+
+    const result = {
+        tasks_total: tasks_data.length,
+        tasks_completed: 0,
+        tasks_due_soon: 0,
+        tasks_overdue: 0
+    };
+
+    for (let i = 0; i < tasks_data.length; i++) {
+        const now = new Date();
+        const dueDate = new Date(tasks_data[i].due_date);
+        const dueSoonThreshold = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+        const isCompleted = tasks_data[i].status === "done";
+
+        const isOverdue =
+            !isCompleted &&
+            dueDate < now;
+
+        const isDueSoon =
+            !isCompleted &&
+            dueDate >= now &&
+            dueDate <= dueSoonThreshold;
+        
+        if (isCompleted) {
+            result.tasks_completed += 1;
+        } else if (isDueSoon) {
+            result.tasks_due_soon += 1;
+        } else if (isOverdue) {
+            result.tasks_overdue += 1;
+        }
+    }
+
+    return result;
+}
+
 export async function createNewTeam(team_info) {
     const team_id = crypto.randomUUID();
     const today = new Date();
@@ -690,7 +746,7 @@ export async function updateTask(task_updated) {
     const { error: assignments_error } = await supabase
         .from("assignments")
         .upsert(assignments, {
-            onConflict: "user_id,task_id",
+            onConflict: "user_id,task_id,project_id,team_id",
             ignoreDuplicates: true
         });
     

@@ -73,6 +73,8 @@ export default function Projects() {
     useEffect(() => {
         let cancelled = false;
 
+        clearTeamNotificationHandlers();
+
         const loadTeam = async () => {
             console.log("Loading Team", team_id);
             setLoading(true);
@@ -202,6 +204,9 @@ export default function Projects() {
         clearTaskNotificationHandlers();
         clearProjectNotificationHandlers();
         clearTeamNotificationHandlers();
+        workspace.currentTask = null;
+        workspace.currentProject = null;
+        workspace.currentTeam = null;
         navigate("/dashboard");
     };
 
