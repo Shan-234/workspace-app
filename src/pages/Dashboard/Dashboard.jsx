@@ -570,6 +570,7 @@ export default function Dashboard() {
                                                     key={team.id}
                                                     id={team.id}
                                                     name={team.name}
+                                                    description={team.description}
                                                 />
                                             )}
                                         />

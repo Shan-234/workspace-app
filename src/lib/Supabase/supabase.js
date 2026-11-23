@@ -259,13 +259,14 @@ export async function retrieveAccount(user_id) {
 
     const { data: team_names, error: names_error } = await supabase
         .from("teams")
-        .select("team_id, name")
+        .select("team_id, name, description")
         .in("team_id", team_ids);
     
     console.log(team_names);
 
     for (let i = 0; i < team_names.length; i++) {
         workspace.currentUser["user_teams"][team_names[i].team_id]["name"] = team_names[i].name;
+        workspace.currentUser["user_teams"][team_names[i].team_id]["description"] = team_names[i].description;
     }
 
     joinNotificationsChannel();
@@ -519,7 +520,7 @@ export async function retrieveTeam(team_id) {
 
     const { data: project_data, error: project_error } = await supabase
         .from("projects")
-        .select("id, name")
+        .select("id, name, description")
         .eq("team_id", team_id);
     
     if (project_error) {
@@ -531,7 +532,7 @@ export async function retrieveTeam(team_id) {
             "id": project_data[i].id,
             "name": project_data[i].name,
             "notifications": 0,
-            "most_recent_log": ""
+            "description": project_data[i].description
         });
     }
 

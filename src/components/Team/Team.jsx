@@ -1,9 +1,13 @@
-import { Link } from 'react-router';
-import './Team.css';
-import { useEffect, useState } from 'react';
-import { getTeamNotifications, registerTeamNotificationHandler } from '../../lib/Supabase/supabase';
 
-export default function Team({ id, name }) {
+import { Link } from "react-router";
+import "./Team.css";
+import { useEffect, useState } from "react";
+import {
+    getTeamNotifications,
+    registerTeamNotificationHandler
+} from "../../lib/Supabase/supabase";
+
+export default function Team({ id, name, description }) {
     const [notifications, setNotifications] = useState(0);
 
     useEffect(() => {
@@ -17,11 +21,22 @@ export default function Team({ id, name }) {
         getTeamNotifications(id).then((result) => {
             setNotifications(result);
         });
-    }, []);
+    }, [id]);
 
     return (
         <Link to={`/projects/${id}`} className="team-button">
-            <span className="team-name">{name}</span>
+            <div className="team-info">
+                <span className="team-name">{name}</span>
+
+                {description && (
+                    <span
+                        className="team-description"
+                        title={description}
+                    >
+                        {description}
+                    </span>
+                )}
+            </div>
 
             {notifications > 0 && (
                 <span className="team-notifications">

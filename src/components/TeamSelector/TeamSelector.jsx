@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Settings, ChevronDown } from "lucide-react";
+import { Share2, ChevronDown } from "lucide-react";
 import "./TeamSelector.css";
 import TeamSelectorItem from "../TeamSelectorItem/TeamSelectorItem";
 import { workspace } from "../../lib/Supabase/supabase";
@@ -8,14 +8,16 @@ import { workspace } from "../../lib/Supabase/supabase";
 export default function TeamSelector({
     id,
     name,
-    onSettings,
+    onShare,
     onTeamChange
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const teams = [];
 
-    for (const [team_id, team] of Object.entries(workspace.currentUser["user_teams"])) {
-        if (team_id != id) {
+    for (const [team_id, team] of Object.entries(
+        workspace.currentUser?.user_teams ?? {}
+    )) {
+        if (String(team_id) !== String(id)) {
             teams.push({
                 id: team_id,
                 name: team.name,
@@ -46,11 +48,11 @@ export default function TeamSelector({
                     <button
                         type="button"
                         className="team-selector-icon-button"
-                        onClick={() => onSettings?.(id)}
-                        title="Team settings"
-                        aria-label="Team settings"
+                        onClick={() => onShare?.(id)}
+                        title="Share team joining code"
+                        aria-label="Share team joining code"
                     >
-                        <Settings size={19} strokeWidth={1.8} />
+                        <Share2 size={19} strokeWidth={1.8} />
                     </button>
 
                     <div className="team-selector-divider" />
@@ -80,7 +82,7 @@ export default function TeamSelector({
                         No other teams available
                     </div>
                 ) : (
-                    teams.map((team) => (
+                    teams.map(team => (
                         <TeamSelectorItem
                             key={team.id}
                             id={team.id}

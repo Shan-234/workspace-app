@@ -62,3 +62,30 @@
 .team-button:hover .team-arrow {
     transform: translateX(3px);
 }
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+}
+
+.team-description {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.team-notifications,
+.team-arrow {
+    flex-shrink: 0;
+}

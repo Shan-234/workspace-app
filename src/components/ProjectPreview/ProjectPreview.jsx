@@ -1,12 +1,15 @@
 
 import { useEffect, useState } from "react";
 import "./ProjectPreview.css";
-import { getProjectNotifications, registerProjectNotificationHandler, workspace } from "../../lib/Supabase/supabase";
+import {
+    getProjectNotifications,
+    registerProjectNotificationHandler
+} from "../../lib/Supabase/supabase";
 
 export default function ProjectPreview({
     id = 0,
     name = "UnNamed",
-    most_recent_log = "",
+    description = "",
     selected = false,
     onClick
 }) {
@@ -24,7 +27,7 @@ export default function ProjectPreview({
         getProjectNotifications(id).then((result) => {
             setNotifications(result);
         });
-    }, []);
+    }, [id]);
 
     return (
         <button
@@ -41,6 +44,15 @@ export default function ProjectPreview({
                 <h3 className="project-preview-name" title={name}>
                     {name}
                 </h3>
+
+                {description && (
+                    <p
+                        className="project-preview-description"
+                        title={description}
+                    >
+                        {description}
+                    </p>
+                )}
             </div>
 
             {notifications > 0 && (

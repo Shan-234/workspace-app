@@ -885,3 +885,63 @@
         width: 100%;
     }
 }
+
+/* Share Team Dialog */
+
+.projects-share-icon {
+    color: #818cf8;
+    background: rgba(99, 102, 241, 0.12);
+}
+
+.projects-joining-code {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    padding: 16px;
+    margin: 18px 0;
+    background: rgba(148, 163, 184, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 10px;
+}
+
+.projects-joining-code-label {
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.projects-joining-code code {
+    color: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    user-select: all;
+}
+
+.projects-share-hint {
+    margin: 0 0 16px;
+    color: #94a3b8;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.projects-share-copy-error {
+    color: #fb7185;
+    font-size: 12px;
+    margin: 0 0 12px;
+}
+
+.projects-share-icon + h2 {
+    margin-top: 12px;
+}
+
+.board-project-dialog-actions
+.board-project-dialog-done {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}

@@ -10,8 +10,12 @@ import {
     FileText,
     X,
     Trash2,
-    CheckCircle2
+    CheckCircle2,
+    Share2,
+    Copy,
+    Check
 } from "lucide-react";
+
 import {
     supabase,
     retrieveTeam,
@@ -28,6 +32,7 @@ import {
     clearProjectNotificationHandlers,
     clearTeamNotificationHandlers
 } from "../../lib/Supabase/supabase";
+
 import TeamSelector from "../../components/TeamSelector/TeamSelector";
 import ProjectPreview from "../../components/ProjectPreview/ProjectPreview";
 import Board from "../../components/Board/Board";
@@ -41,6 +46,7 @@ async function getSessionId() {
     } = await supabase.auth.getSession();
 
     if (error) throw error;
+
     return session?.user.id ?? null;
 }
 
@@ -71,8 +77,14 @@ export default function Projects() {
     const [deleteError, setDeleteError] = useState("");
     const [projectToDelete, setProjectToDelete] = useState(null);
 
+    const [shareTeamOpen, setShareTeamOpen] = useState(false);
+    const [shareTeamId, setShareTeamId] = useState("");
+    const [codeCopied, setCodeCopied] = useState(false);
+    const [copyError, setCopyError] = useState("");
+
     const deleteConfirmRef = useRef(null);
     const deleteSuccessRef = useRef(null);
+    const shareTeamRef = useRef(null);
 
     useEffect(() => {
         async function getUser() {
@@ -86,7 +98,7 @@ export default function Projects() {
         }
 
         getUser();
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         let cancelled = false;
@@ -95,9 +107,13 @@ export default function Projects() {
 
         const loadTeam = async () => {
             console.log("Loading Team", team_id);
+
             setLoading(true);
             setError(null);
             setAddProject(false);
+            setShareTeamOpen(false);
+            setCodeCopied(false);
+            setCopyError("");
 
             try {
                 const success = await retrieveTeam(team_id);
@@ -136,6 +152,7 @@ export default function Projects() {
             } catch (err) {
                 if (!cancelled) {
                     console.error("Error retrieving team:", err);
+
                     setError(
                         err instanceof Error
                             ? err.message
@@ -191,7 +208,7 @@ export default function Projects() {
             });
 
         return () => {
-            supabase.removeChannel(channel);
+            void supabase.removeChannel(channel);
         };
     }, [team_id]);
 
@@ -217,6 +234,17 @@ export default function Projects() {
         }
     }, [deleteSuccessOpen]);
 
+    useEffect(() => {
+        const dialog = shareTeamRef.current;
+        if (!dialog) return;
+
+        if (shareTeamOpen && !dialog.open) {
+            dialog.showModal();
+        } else if (!shareTeamOpen && dialog.open) {
+            dialog.close();
+        }
+    }, [shareTeamOpen]);
+
     const projects = currentTeam?.projects ?? [];
 
     const filteredProjects = useMemo(() => {
@@ -228,6 +256,7 @@ export default function Projects() {
     }, [projects, searchQuery]);
 
     const selectedProjectId = currentProject?.id ?? null;
+
     const projectName =
         currentProject?.name ?? "Select a project";
 
@@ -235,6 +264,7 @@ export default function Projects() {
         clearTaskNotificationHandlers();
         clearProjectNotificationHandlers();
         clearTeamNotificationHandlers();
+
         navigate("/projects/" + id);
     };
 
@@ -250,12 +280,19 @@ export default function Projects() {
         navigate("/dashboard");
     };
 
-    const handleRemoveProject = (project_id) => {
-        if ((workspace.currentProject) && (project_id === workspace.currentProject["id"])) {
+    const handleRemoveProject = project_id => {
+        if (
+            workspace.currentProject &&
+            String(project_id) ===
+            String(workspace.currentProject.id)
+        ) {
             clearTaskNotificationHandlers();
+
             workspace.currentTask = null;
             workspace.currentProject = null;
+
             setCurrentProject(null);
+            setOpenTaskDetails(false);
             setDeleteSuccessOpen(true);
         }
 
@@ -263,8 +300,7 @@ export default function Projects() {
             workspace.currentTeam?.projects ?? []
         ).filter(
             project =>
-                String(project.id) !==
-                String(project_id)
+                String(project.id) !== String(project_id)
         );
 
         if (workspace.currentTeam) {
@@ -284,17 +320,22 @@ export default function Projects() {
     const handleProjectSelect = projectId => {
         setLoadingProject(true);
 
-        retrieveProject(projectId).then(current_project => {
-            setLoadingProject(false);
-            setCurrentProject(current_project);
-            setAddProject(false);
-            setOpenTaskDetails(false);
-            workspace.currentTask = null;
-        });
+        retrieveProject(projectId)
+            .then(current_project => {
+                setCurrentProject(current_project);
+                setAddProject(false);
+                setOpenTaskDetails(false);
+                workspace.currentTask = null;
+            })
+            .catch(error => {
+                console.error("Error loading project:", error);
+            })
+            .finally(() => {
+                setLoadingProject(false);
+            });
     };
 
     const handleAddProject = () => {
-        console.log(currentTeam);
         setProjectNameInput("");
         setProjectDescription("");
         setAddProject(true);
@@ -306,7 +347,7 @@ export default function Projects() {
         setProjectDescription("");
     };
 
-    const handleCreateProject = async (event) => {
+    const handleCreateProject = async event => {
         event.preventDefault();
 
         const name = projectNameInput.trim();
@@ -322,7 +363,9 @@ export default function Projects() {
             if (success) {
                 setCurrentTeam({
                     ...workspace.currentTeam,
-                    projects: [...(workspace.currentTeam.projects ?? [])]
+                    projects: [
+                        ...(workspace.currentTeam.projects ?? [])
+                    ]
                 });
 
                 setCurrentProject(workspace.currentProject);
@@ -337,14 +380,16 @@ export default function Projects() {
         }
     };
 
-    const handleNewProject = (new_project) => {
+    const handleNewProject = new_project => {
         const project_id = new_project.id;
 
-        const existingProjects = workspace.currentTeam?.projects ?? [];
+        const existingProjects =
+            workspace.currentTeam?.projects ?? [];
 
         if (
             existingProjects.some(
-                project => String(project.id) === String(project_id)
+                project =>
+                    String(project.id) === String(project_id)
             )
         ) {
             return;
@@ -362,16 +407,47 @@ export default function Projects() {
             new_project_data
         ];
 
-        workspace.currentTeam.projects = updatedProjects;
+        if (workspace.currentTeam) {
+            workspace.currentTeam.projects = updatedProjects;
+        }
 
-        setCurrentTeam(previous => ({
-            ...previous,
-            projects: updatedProjects
-        }));
+        setCurrentTeam(previous =>
+            previous
+                ? {
+                    ...previous,
+                    projects: updatedProjects
+                }
+                : previous
+        );
     };
 
-    const handleTeamSettings = teamId => {
-        console.log("Team settings:", teamId);
+    const handleShareTeam = id => {
+        setShareTeamId(String(id));
+        setCodeCopied(false);
+        setCopyError("");
+        setShareTeamOpen(true);
+    };
+
+    const handleCloseShareTeam = () => {
+        setShareTeamOpen(false);
+        setCodeCopied(false);
+        setCopyError("");
+    };
+
+    const handleCopyTeamCode = async () => {
+        if (!shareTeamId) return;
+
+        setCopyError("");
+
+        try {
+            await navigator.clipboard.writeText(shareTeamId);
+            setCodeCopied(true);
+        } catch (error) {
+            console.error("Error copying team code:", error);
+            setCopyError(
+                "Unable to copy automatically. Please select and copy the code."
+            );
+        }
     };
 
     const handleAddTask = status => {
@@ -382,10 +458,20 @@ export default function Projects() {
         console.log("Opening Task settings...");
         setLoadingTask(true);
 
-        retrieveTask(taskId).then(success => {
-            setLoadingTask(false);
-            setOpenTaskDetails(true);
-        });
+        retrieveTask(taskId)
+            .then(success => {
+                if (success) {
+                    setOpenTaskDetails(true);
+                } else {
+                    console.error("Error loading task!");
+                }
+            })
+            .catch(error => {
+                console.error("Error loading task:", error);
+            })
+            .finally(() => {
+                setLoadingTask(false);
+            });
     };
 
     const handleProjectSettings = () => {
@@ -477,23 +563,28 @@ export default function Projects() {
 
                 for (
                     let i = 0;
-                    i < workspace.currentProject["tasks"].length;
+                    i < workspace.currentProject.tasks.length;
                     i++
                 ) {
                     if (
-                        workspace.currentProject["tasks"][i]["id"] ===
+                        workspace.currentProject.tasks[i].id ===
                         task_updated.id
                     ) {
-                        workspace.currentProject["tasks"][i]["title"] =
+                        workspace.currentProject.tasks[i].title =
                             task_updated.title;
-                        workspace.currentProject["tasks"][i]["description"] =
+
+                        workspace.currentProject.tasks[i].description =
                             task_updated.description;
-                        workspace.currentProject["tasks"][i]["status"] =
+
+                        workspace.currentProject.tasks[i].status =
                             task_updated.status;
-                        workspace.currentProject["tasks"][i]["priority"] =
+
+                        workspace.currentProject.tasks[i].priority =
                             task_updated.priority;
-                        workspace.currentProject["tasks"][i]["due_date"] =
+
+                        workspace.currentProject.tasks[i].due_date =
                             task_updated.due_date;
+
                         break;
                     }
                 }
@@ -510,18 +601,19 @@ export default function Projects() {
         deleteTask(task_id).then(success => {
             if (success) {
                 console.log("Successfully Deleted Task!");
+
                 workspace.currentTask = null;
 
                 for (
                     let i = 0;
-                    i < workspace.currentProject["tasks"].length;
+                    i < workspace.currentProject.tasks.length;
                     i++
                 ) {
                     if (
-                        workspace.currentProject["tasks"][i]["id"] ===
+                        workspace.currentProject.tasks[i].id ===
                         task_id
                     ) {
-                        workspace.currentProject["tasks"].splice(i, 1);
+                        workspace.currentProject.tasks.splice(i, 1);
                         break;
                     }
                 }
@@ -534,7 +626,7 @@ export default function Projects() {
         });
     };
 
-    const handleCancelTaskDetails = event => {
+    const handleCancelTaskDetails = () => {
         workspace.currentTask = null;
         setOpenTaskDetails(false);
         setCurrentProject(workspace.currentProject);
@@ -787,7 +879,6 @@ export default function Projects() {
     }
 
     if (loadingTask) {
-        console.log("Loading Task...");
         clearTaskNotificationHandlers();
 
         board = (
@@ -818,7 +909,7 @@ export default function Projects() {
                     <TeamSelector
                         id={currentTeam.team_id}
                         name={currentTeam.name ?? "Unnamed Team"}
-                        onSettings={handleTeamSettings}
+                        onShare={handleShareTeam}
                         onTeamChange={onTeamChange}
                     />
 
@@ -867,7 +958,7 @@ export default function Projects() {
                                 key={project.id}
                                 id={project.id}
                                 name={project.name}
-                                most_recent_log={project.most_recent_log}
+                                description={project.description}
                                 selected={
                                     !addProject &&
                                     String(project.id) ===
@@ -882,7 +973,9 @@ export default function Projects() {
                                 size={24}
                                 strokeWidth={1.5}
                             />
+
                             <p>No projects found</p>
+
                             <span>
                                 {projects.length === 0
                                     ? "Create a project to get started."
@@ -905,6 +998,82 @@ export default function Projects() {
                 {board}
             </main>
 
+            {/* Share Team Dialog */}
+
+            <dialog
+                ref={shareTeamRef}
+                className="board-project-dialog"
+                aria-labelledby="projects-share-team-title"
+                aria-describedby="projects-share-team-description"
+                onClose={handleCloseShareTeam}
+            >
+                <div className="board-project-dialog-content">
+                    <div className="board-project-dialog-icon projects-share-icon">
+                        <Share2 size={25} strokeWidth={1.8} />
+                    </div>
+
+                    <h2 id="projects-share-team-title">
+                        Invite Team Members
+                    </h2>
+
+                    <p id="projects-share-team-description">
+                        Share this joining code with others to
+                        allow them to join{" "}
+                        <strong>{currentTeam.name}</strong>.
+                    </p>
+
+                    <div className="projects-joining-code">
+                        <span className="projects-joining-code-label">
+                            TEAM JOINING CODE
+                        </span>
+
+                        <code>{shareTeamId}</code>
+                    </div>
+
+                    {copyError && (
+                        <p
+                            className="projects-share-copy-error"
+                            role="alert"
+                        >
+                            {copyError}
+                        </p>
+                    )}
+
+                    <p className="projects-share-hint">
+                        Only share this code with people you want
+                        to invite to your team.
+                    </p>
+
+                    <div className="board-project-dialog-actions">
+                        <button
+                            type="button"
+                            className="board-project-dialog-cancel"
+                            onClick={() =>
+                                shareTeamRef.current?.close()
+                            }
+                        >
+                            Close
+                        </button>
+
+                        <button
+                            type="button"
+                            className="board-project-dialog-done"
+                            onClick={handleCopyTeamCode}
+                        >
+                            {codeCopied ? (
+                                <Check size={16} />
+                            ) : (
+                                <Copy size={16} />
+                            )}
+
+                            {codeCopied ? "Copied!" : "Copy Code"}
+                        </button>
+                    </div>
+                </div>
+            </dialog>
+
+            {/* Delete Project Confirmation Dialog */}
+
             <dialog
                 ref={deleteConfirmRef}
                 className="board-project-dialog"
@@ -916,7 +1085,9 @@ export default function Projects() {
                     }
                 }}
                 onCancel={event => {
-                    if (deletingProject) event.preventDefault();
+                    if (deletingProject) {
+                        event.preventDefault();
+                    }
                 }}
             >
                 <div className="board-project-dialog-content">
@@ -936,7 +1107,10 @@ export default function Projects() {
                     </p>
 
                     {deleteError && (
-                        <p className="projects-delete-error" role="alert">
+                        <p
+                            className="projects-delete-error"
+                            role="alert"
+                        >
                             {deleteError}
                         </p>
                     )}
@@ -960,6 +1134,7 @@ export default function Projects() {
                             disabled={deletingProject}
                         >
                             <Trash2 size={16} />
+
                             {deletingProject
                                 ? "Deleting..."
                                 : "Delete Project"}
@@ -967,6 +1142,8 @@ export default function Projects() {
                     </div>
                 </div>
             </dialog>
+
+            {/* Project Deleted Dialog */}
 
             <dialog
                 ref={deleteSuccessRef}
