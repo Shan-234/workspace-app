@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import {
     Search,
@@ -8,14 +8,31 @@ import {
     ArrowLeft,
     FolderPlus,
     FileText,
-    X
+    X,
+    Trash2,
+    CheckCircle2
 } from "lucide-react";
-import { supabase, retrieveTeam, workspace, createProject, retrieveProject, retrieveAccount, retrieveTask, updateTask, deleteTask, clearTaskNotificationHandlers, getProjectNotifications, clearProjectNotificationHandlers, clearTeamNotificationHandlers } from "../../lib/Supabase/supabase";
+import {
+    supabase,
+    retrieveTeam,
+    workspace,
+    createProject,
+    retrieveProject,
+    retrieveAccount,
+    retrieveTask,
+    updateTask,
+    deleteTask,
+    deleteProject,
+    clearTaskNotificationHandlers,
+    getProjectNotifications,
+    clearProjectNotificationHandlers,
+    clearTeamNotificationHandlers
+} from "../../lib/Supabase/supabase";
 import TeamSelector from "../../components/TeamSelector/TeamSelector";
 import ProjectPreview from "../../components/ProjectPreview/ProjectPreview";
 import Board from "../../components/Board/Board";
-import "./Projects.css";
 import TaskDetails from "../../components/TaskDetails/TaskDetails";
+import "./Projects.css";
 
 async function getSessionId() {
     const {
@@ -23,15 +40,8 @@ async function getSessionId() {
         error
     } = await supabase.auth.getSession();
 
-    if (error) {
-        throw error;
-    }
-
-    if (session) {
-        return session.user.id;
-    }
-
-    return null;
+    if (error) throw error;
+    return session?.user.id ?? null;
 }
 
 export default function Projects() {
@@ -53,8 +63,16 @@ export default function Projects() {
 
     const [loadingTask, setLoadingTask] = useState(false);
     const [openTaskDetails, setOpenTaskDetails] = useState(false);
-
     const [projectNotifications, setProjectNotifications] = useState({});
+
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteSuccessOpen, setDeleteSuccessOpen] = useState(false);
+    const [deletingProject, setDeletingProject] = useState(false);
+    const [deleteError, setDeleteError] = useState("");
+    const [projectToDelete, setProjectToDelete] = useState(null);
+
+    const deleteConfirmRef = useRef(null);
+    const deleteSuccessRef = useRef(null);
 
     useEffect(() => {
         async function getUser() {
@@ -106,7 +124,7 @@ export default function Projects() {
 
                 const selectedProject =
                     projects.find(
-                        (project) =>
+                        project =>
                             String(project.id) ===
                             String(existingProject?.id)
                     ) ?? null;
@@ -115,7 +133,6 @@ export default function Projects() {
 
                 setCurrentTeam(team);
                 setCurrentProject(selectedProject);
-
             } catch (err) {
                 if (!cancelled) {
                     console.error("Error retrieving team:", err);
@@ -152,7 +169,7 @@ export default function Projects() {
                     table: "projects",
                     filter: `team_id=eq.${team_id}`
                 },
-                (payload) => {
+                payload => {
                     console.log("Project Added:", payload);
                     handleNewProject(payload.new);
                 }
@@ -162,14 +179,14 @@ export default function Projects() {
                 {
                     event: "DELETE",
                     schema: "public",
-                    table: "projects",
-                    filter: `team_id=eq.${team_id}`
+                    table: "projects"
                 },
-                (payload) => {
+                payload => {
                     console.log("Project Deleted:", payload);
+                    handleRemoveProject(payload.old.id);
                 }
             )
-            .subscribe((status) => {
+            .subscribe(status => {
                 console.log("Projects Realtime status:", status);
             });
 
@@ -178,10 +195,32 @@ export default function Projects() {
         };
     }, [team_id]);
 
+    useEffect(() => {
+        const dialog = deleteConfirmRef.current;
+        if (!dialog) return;
+
+        if (deleteConfirmOpen && !dialog.open) {
+            dialog.showModal();
+        } else if (!deleteConfirmOpen && dialog.open) {
+            dialog.close();
+        }
+    }, [deleteConfirmOpen]);
+
+    useEffect(() => {
+        const dialog = deleteSuccessRef.current;
+        if (!dialog) return;
+
+        if (deleteSuccessOpen && !dialog.open) {
+            dialog.showModal();
+        } else if (!deleteSuccessOpen && dialog.open) {
+            dialog.close();
+        }
+    }, [deleteSuccessOpen]);
+
     const projects = currentTeam?.projects ?? [];
 
     const filteredProjects = useMemo(() => {
-        return projects.filter((project) =>
+        return projects.filter(project =>
             (project.name ?? "")
                 .toLowerCase()
                 .includes(searchQuery.toLowerCase())
@@ -189,11 +228,10 @@ export default function Projects() {
     }, [projects, searchQuery]);
 
     const selectedProjectId = currentProject?.id ?? null;
-
     const projectName =
         currentProject?.name ?? "Select a project";
 
-    const onTeamChange = (id) => {
+    const onTeamChange = id => {
         clearTaskNotificationHandlers();
         clearProjectNotificationHandlers();
         clearTeamNotificationHandlers();
@@ -204,15 +242,49 @@ export default function Projects() {
         clearTaskNotificationHandlers();
         clearProjectNotificationHandlers();
         clearTeamNotificationHandlers();
+
         workspace.currentTask = null;
         workspace.currentProject = null;
         workspace.currentTeam = null;
+
         navigate("/dashboard");
     };
 
-    const handleProjectSelect = (projectId) => {
+    const handleRemoveProject = (project_id) => {
+        if ((workspace.currentProject) && (project_id === workspace.currentProject["id"])) {
+            clearTaskNotificationHandlers();
+            workspace.currentTask = null;
+            workspace.currentProject = null;
+            setCurrentProject(null);
+            setDeleteSuccessOpen(true);
+        }
+
+        const remainingProjects = (
+            workspace.currentTeam?.projects ?? []
+        ).filter(
+            project =>
+                String(project.id) !==
+                String(project_id)
+        );
+
+        if (workspace.currentTeam) {
+            workspace.currentTeam.projects = remainingProjects;
+        }
+
+        setCurrentTeam(previous =>
+            previous
+                ? {
+                    ...previous,
+                    projects: remainingProjects
+                }
+                : previous
+        );
+    };
+
+    const handleProjectSelect = projectId => {
         setLoadingProject(true);
-        retrieveProject(projectId).then((current_project) => {
+
+        retrieveProject(projectId).then(current_project => {
             setLoadingProject(false);
             setCurrentProject(current_project);
             setAddProject(false);
@@ -234,67 +306,83 @@ export default function Projects() {
         setProjectDescription("");
     };
 
-    const handleCreateProject = (event) => {
+    const handleCreateProject = async (event) => {
         event.preventDefault();
-
-        setCreatingProject(true);
 
         const name = projectNameInput.trim();
         const description = projectDescription.trim();
 
         if (!name) return;
 
-        createProject(name, description).then((success) => {
+        setCreatingProject(true);
+
+        try {
+            const success = await createProject(name, description);
+
             if (success) {
-                setCreatingProject(false);
-                handleCancelAddProject();
-                setCurrentTeam(workspace.currentTeam);
+                setCurrentTeam({
+                    ...workspace.currentTeam,
+                    projects: [...(workspace.currentTeam.projects ?? [])]
+                });
+
                 setCurrentProject(workspace.currentProject);
+                handleCancelAddProject();
             } else {
                 console.error("Error creating project!");
             }
-        });
+        } catch (error) {
+            console.error("Error creating project:", error);
+        } finally {
+            setCreatingProject(false);
+        }
     };
 
     const handleNewProject = (new_project) => {
         const project_id = new_project.id;
 
-        for (let i = 0; i < workspace.currentTeam["projects"].length; i++) {
-            if (workspace.currentTeam["projects"][i]["id"] === project_id) {
-                return;
-            }
+        const existingProjects = workspace.currentTeam?.projects ?? [];
+
+        if (
+            existingProjects.some(
+                project => String(project.id) === String(project_id)
+            )
+        ) {
+            return;
         }
 
         const new_project_data = {
-            "id": project_id,
-            "name": new_project.name,
-            "notifications": 0,
-            "most_recent_log": ""
+            id: project_id,
+            name: new_project.name,
+            notifications: 0,
+            most_recent_log: ""
         };
 
-        workspace.currentTeam["projects"].push(new_project_data);
-        setCurrentTeam({
-            "team_id": workspace.currentTeam.team_id,
-            "name": workspace.currentTeam.name,
-            "description": workspace.currentTeam.description,
-            "activity_logs": workspace.currentTeam.activity_logs,
-            "projects": workspace.currentTeam["projects"]
-        });
+        const updatedProjects = [
+            ...existingProjects,
+            new_project_data
+        ];
+
+        workspace.currentTeam.projects = updatedProjects;
+
+        setCurrentTeam(previous => ({
+            ...previous,
+            projects: updatedProjects
+        }));
     };
 
-    const handleTeamSettings = (teamId) => {
+    const handleTeamSettings = teamId => {
         console.log("Team settings:", teamId);
     };
 
-    const handleAddTask = (status) => {
+    const handleAddTask = status => {
         console.log("Add task to:", status);
     };
 
-    const handleTaskSettings = (taskId) => {
+    const handleTaskSettings = taskId => {
         console.log("Opening Task settings...");
         setLoadingTask(true);
 
-        retrieveTask(taskId).then((success) => {
+        retrieveTask(taskId).then(success => {
             setLoadingTask(false);
             setOpenTaskDetails(true);
         });
@@ -304,18 +392,108 @@ export default function Projects() {
         console.log("Project settings:", selectedProjectId);
     };
 
-    const handleSaveTaskDetails = (task_updated) => {
-        updateTask(task_updated).then((success) => {
+    const handleRequestDeleteProject = () => {
+        if (!currentProject || deletingProject) return;
+
+        setProjectToDelete({
+            id: currentProject.id,
+            name: currentProject.name
+        });
+
+        setDeleteError("");
+        setDeleteConfirmOpen(true);
+    };
+
+    const handleConfirmDeleteProject = async () => {
+        if (!projectToDelete || deletingProject) return;
+
+        setDeletingProject(true);
+        setDeleteError("");
+
+        try {
+            const success = await deleteProject(projectToDelete.id);
+
+            if (!success) {
+                throw new Error("Unable to delete the project.");
+            }
+
+            const remainingProjects = (
+                workspace.currentTeam?.projects ?? []
+            ).filter(
+                project =>
+                    String(project.id) !==
+                    String(projectToDelete.id)
+            );
+
+            if (workspace.currentTeam) {
+                workspace.currentTeam.projects = remainingProjects;
+            }
+
+            setCurrentTeam(previous =>
+                previous
+                    ? {
+                        ...previous,
+                        projects: remainingProjects
+                    }
+                    : previous
+            );
+
+            if (
+                String(workspace.currentProject?.id) ===
+                String(projectToDelete.id)
+            ) {
+                workspace.currentProject = null;
+                workspace.currentTask = null;
+            }
+
+            setCurrentProject(null);
+            setOpenTaskDetails(false);
+            setAddProject(false);
+
+            setDeleteConfirmOpen(false);
+            setDeleteSuccessOpen(true);
+        } catch (err) {
+            console.error("Error deleting project:", err);
+
+            setDeleteError(
+                err instanceof Error
+                    ? err.message
+                    : "Unable to delete the project."
+            );
+        } finally {
+            setDeletingProject(false);
+        }
+    };
+
+    const handleCloseDeleteSuccess = () => {
+        setDeleteSuccessOpen(false);
+        setProjectToDelete(null);
+    };
+
+    const handleSaveTaskDetails = task_updated => {
+        updateTask(task_updated).then(success => {
             if (success) {
                 workspace.currentTask = null;
 
-                for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-                    if (workspace.currentProject["tasks"][i]["id"] === task_updated.id) {
-                        workspace.currentProject["tasks"][i]["title"] = task_updated.title;
-                        workspace.currentProject["tasks"][i]["description"] = task_updated.description;
-                        workspace.currentProject["tasks"][i]["status"] = task_updated.status;
-                        workspace.currentProject["tasks"][i]["priority"] = task_updated.priority;
-                        workspace.currentProject["tasks"][i]["due_date"] = task_updated.due_date;
+                for (
+                    let i = 0;
+                    i < workspace.currentProject["tasks"].length;
+                    i++
+                ) {
+                    if (
+                        workspace.currentProject["tasks"][i]["id"] ===
+                        task_updated.id
+                    ) {
+                        workspace.currentProject["tasks"][i]["title"] =
+                            task_updated.title;
+                        workspace.currentProject["tasks"][i]["description"] =
+                            task_updated.description;
+                        workspace.currentProject["tasks"][i]["status"] =
+                            task_updated.status;
+                        workspace.currentProject["tasks"][i]["priority"] =
+                            task_updated.priority;
+                        workspace.currentProject["tasks"][i]["due_date"] =
+                            task_updated.due_date;
                         break;
                     }
                 }
@@ -328,14 +506,21 @@ export default function Projects() {
         });
     };
 
-    const handleDeleteTask = (task_id) => {
-        deleteTask(task_id).then((success) => {
+    const handleDeleteTask = task_id => {
+        deleteTask(task_id).then(success => {
             if (success) {
                 console.log("Successfully Deleted Task!");
                 workspace.currentTask = null;
 
-                for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-                    if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+                for (
+                    let i = 0;
+                    i < workspace.currentProject["tasks"].length;
+                    i++
+                ) {
+                    if (
+                        workspace.currentProject["tasks"][i]["id"] ===
+                        task_id
+                    ) {
                         workspace.currentProject["tasks"].splice(i, 1);
                         break;
                     }
@@ -349,7 +534,7 @@ export default function Projects() {
         });
     };
 
-    const handleCancelTaskDetails = (event) => {
+    const handleCancelTaskDetails = event => {
         workspace.currentTask = null;
         setOpenTaskDetails(false);
         setCurrentProject(workspace.currentProject);
@@ -382,7 +567,7 @@ export default function Projects() {
                 project_name={projectName}
                 onAddTask={handleAddTask}
                 onTaskSettings={handleTaskSettings}
-                onProjectSettings={handleProjectSettings}
+                onDeleteProject={handleRequestDeleteProject}
             />
         );
     }
@@ -393,7 +578,7 @@ export default function Projects() {
         return (
             <main className="projects-loading">
                 <div className="projects-loading-content">
-                    <div className="projects-loading-spinner"></div>
+                    <div className="projects-loading-spinner" />
                     <h2>WORKSPACE</h2>
                     <p>Loading team projects...</p>
                 </div>
@@ -475,7 +660,9 @@ export default function Projects() {
                         <div className="projects-create-field">
                             <label htmlFor="new-project-name">
                                 Project name
-                                <span className="projects-required">*</span>
+                                <span className="projects-required">
+                                    *
+                                </span>
                             </label>
 
                             <div className="projects-create-input-wrapper">
@@ -489,7 +676,7 @@ export default function Projects() {
                                     type="text"
                                     placeholder="e.g. Website Redesign"
                                     value={projectNameInput}
-                                    onChange={(event) =>
+                                    onChange={event =>
                                         setProjectNameInput(
                                             event.target.value
                                         )
@@ -523,7 +710,7 @@ export default function Projects() {
                                     id="new-project-description"
                                     placeholder="What is this project about? Describe its goals, scope, or purpose..."
                                     value={projectDescription}
-                                    onChange={(event) =>
+                                    onChange={event =>
                                         setProjectDescription(
                                             event.target.value
                                         )
@@ -577,7 +764,7 @@ export default function Projects() {
         board = (
             <div className="projects-loading">
                 <div className="projects-loading-content">
-                    <div className="projects-loading-spinner"></div>
+                    <div className="projects-loading-spinner" />
                     <h2>WORKSPACE</h2>
                     <p>Creating your project...</p>
                 </div>
@@ -591,7 +778,7 @@ export default function Projects() {
         board = (
             <div className="projects-loading">
                 <div className="projects-loading-content">
-                    <div className="projects-loading-spinner"></div>
+                    <div className="projects-loading-spinner" />
                     <h2>WORKSPACE</h2>
                     <p>Loading your project...</p>
                 </div>
@@ -606,7 +793,7 @@ export default function Projects() {
         board = (
             <div className="projects-loading">
                 <div className="projects-loading-content">
-                    <div className="projects-loading-spinner"></div>
+                    <div className="projects-loading-spinner" />
                     <h2>WORKSPACE</h2>
                     <p>Loading task details...</p>
                 </div>
@@ -648,7 +835,7 @@ export default function Projects() {
                                 className="projects-search-input"
                                 placeholder="Search projects..."
                                 value={searchQuery}
-                                onChange={(event) =>
+                                onChange={event =>
                                     setSearchQuery(event.target.value)
                                 }
                             />
@@ -674,8 +861,8 @@ export default function Projects() {
                 </div>
 
                 <div className="projects-project-list">
-                    {currentTeam["projects"].length > 0 ? (
-                        currentTeam["projects"].map((project) => (
+                    {filteredProjects.length > 0 ? (
+                        filteredProjects.map(project => (
                             <ProjectPreview
                                 key={project.id}
                                 id={project.id}
@@ -717,6 +904,104 @@ export default function Projects() {
             <main className="projects-board-area">
                 {board}
             </main>
+
+            <dialog
+                ref={deleteConfirmRef}
+                className="board-project-dialog"
+                aria-labelledby="projects-delete-confirm-title"
+                aria-describedby="projects-delete-confirm-description"
+                onClose={() => {
+                    if (!deletingProject) {
+                        setDeleteConfirmOpen(false);
+                    }
+                }}
+                onCancel={event => {
+                    if (deletingProject) event.preventDefault();
+                }}
+            >
+                <div className="board-project-dialog-content">
+                    <div className="board-project-dialog-icon board-project-dialog-icon-danger">
+                        <Trash2 size={24} strokeWidth={1.8} />
+                    </div>
+
+                    <h2 id="projects-delete-confirm-title">
+                        Delete Project?
+                    </h2>
+
+                    <p id="projects-delete-confirm-description">
+                        Are you sure you want to delete{" "}
+                        <strong>{projectToDelete?.name}</strong>?
+                        This action is irreversible. The project and
+                        its tasks will no longer be accessible.
+                    </p>
+
+                    {deleteError && (
+                        <p className="projects-delete-error" role="alert">
+                            {deleteError}
+                        </p>
+                    )}
+
+                    <div className="board-project-dialog-actions">
+                        <button
+                            type="button"
+                            className="board-project-dialog-cancel"
+                            onClick={() =>
+                                setDeleteConfirmOpen(false)
+                            }
+                            disabled={deletingProject}
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            className="board-project-dialog-delete"
+                            onClick={handleConfirmDeleteProject}
+                            disabled={deletingProject}
+                        >
+                            <Trash2 size={16} />
+                            {deletingProject
+                                ? "Deleting..."
+                                : "Delete Project"}
+                        </button>
+                    </div>
+                </div>
+            </dialog>
+
+            <dialog
+                ref={deleteSuccessRef}
+                className="board-project-dialog"
+                aria-labelledby="projects-delete-success-title"
+                aria-describedby="projects-delete-success-description"
+                onClose={handleCloseDeleteSuccess}
+            >
+                <div className="board-project-dialog-content">
+                    <div className="board-project-dialog-icon board-project-dialog-icon-success">
+                        <CheckCircle2 size={26} strokeWidth={1.8} />
+                    </div>
+
+                    <h2 id="projects-delete-success-title">
+                        Project Deleted
+                    </h2>
+
+                    <p id="projects-delete-success-description">
+                        <strong>{projectToDelete?.name}</strong> has
+                        been deleted and is no longer accessible.
+                    </p>
+
+                    <div className="board-project-dialog-actions">
+                        <button
+                            type="button"
+                            className="board-project-dialog-done"
+                            onClick={() =>
+                                deleteSuccessRef.current?.close()
+                            }
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </dialog>
         </div>
     );
 }

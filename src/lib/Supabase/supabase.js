@@ -552,6 +552,57 @@ export async function retrieveProject(project_id) {
     return workspace.currentProject;
 }
 
+export async function deleteProject(project_id) {
+    const { data: tasks_data, error: tasks_error } = await supabase
+        .from("tasks")
+        .select("id")
+        .eq("project_id", project_id);
+    
+    if (tasks_error) {
+        throw tasks_error;
+    }
+
+    const task_ids = tasks_data.map((task) => task.id);
+
+    const { error: comments_error } = await supabase
+        .from("comments")
+        .delete()
+        .in("task_id", task_ids);
+    
+    if (comments_error) {
+        throw comments_error;
+    }
+
+    const { error: assignments_error } = await supabase
+        .from("assignments")
+        .delete()
+        .eq("project_id", project_id);
+    
+    if (assignments_error) {
+        throw assignments_error;
+    }
+
+    const { error: tasks_delete_error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("project_id", project_id);
+    
+    if (tasks_delete_error) {
+        throw tasks_delete_error;
+    }
+
+    const { error: project_error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", project_id);
+    
+    if (project_error) {
+        throw project_error;
+    }
+
+    return true;
+}
+
 export async function createTask(new_task) {
     const { data: task_data, error: task_error } = await supabase
         .from("tasks")

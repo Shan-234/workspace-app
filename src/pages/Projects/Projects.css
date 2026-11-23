@@ -750,3 +750,138 @@
 .projects-back-dashboard:hover svg {
     transform: translateX(-3px);
 }
+
+
+.board-project-dialog {
+    width: min(440px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    padding: 0;
+    border: 1px solid #344058;
+    border-radius: 16px;
+    background: #151c2e;
+    color: #f1f5ff;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .45);
+}
+
+.board-project-dialog::backdrop {
+    background: rgba(5, 9, 18, .72);
+    backdrop-filter: blur(4px);
+}
+
+.board-project-dialog-content {
+    padding: 30px;
+    text-align: center;
+}
+
+.board-project-dialog-icon {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    border-radius: 14px;
+}
+
+.board-project-dialog-icon-danger {
+    color: #fb7185;
+    background: rgba(239, 68, 68, .12);
+}
+
+.board-project-dialog-icon-success {
+    color: #4ade80;
+    background: rgba(74, 222, 128, .12);
+}
+
+.board-project-dialog h2 {
+    margin: 0 0 12px;
+    font-size: 22px;
+    font-weight: 650;
+}
+
+.board-project-dialog p {
+    margin: 0;
+    color: #a5b3cc;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.board-project-dialog p strong {
+    color: #f1f5ff;
+    overflow-wrap: anywhere;
+}
+
+.board-project-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.board-project-dialog-actions button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.board-project-dialog-actions button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.board-project-dialog-cancel {
+    background: #26324a;
+    color: #e2e8f0;
+    border: 1px solid #344058;
+}
+
+.board-project-dialog-cancel:not(:disabled):hover {
+    background: #344058;
+}
+
+.board-project-dialog-delete {
+    background: #dc2626;
+    color: white;
+    border: 1px solid #dc2626;
+}
+
+.board-project-dialog-delete:not(:disabled):hover {
+    background: #b91c1c;
+}
+
+.board-project-dialog-done {
+    flex: 1;
+    background: #4f46e5;
+    color: white;
+    border: 1px solid #4f46e5;
+}
+
+.board-project-dialog-done:hover {
+    background: #4338ca;
+}
+
+.projects-delete-error {
+    margin-top: 14px !important;
+    color: #fb7185 !important;
+    font-size: 12px !important;
+}
+
+@media (max-width: 480px) {
+    .board-project-dialog-content {
+        padding: 24px 18px;
+    }
+
+    .board-project-dialog-actions {
+        flex-direction: column-reverse;
+    }
+
+    .board-project-dialog-actions button {
+        width: 100%;
+    }
+}

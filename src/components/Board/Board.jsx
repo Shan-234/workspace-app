@@ -58,7 +58,8 @@ function FindResultDeck(mouseX, mouseY) {
 export default function Board({
     project_name = "Untitled Project",
     onAddTask,
-    onTaskSettings
+    onTaskSettings,
+    onDeleteProject
 }) {
     const [num, setNum] = useState(0);
     const [progressOpen, setProgressOpen] = useState(false);
@@ -514,6 +515,7 @@ export default function Board({
                                 className="board-delete-button"
                                 aria-label="Delete project"
                                 title="Delete project"
+                                onClick={onDeleteProject}
                             >
                                 <Trash2
                                     size={17}
