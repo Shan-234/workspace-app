@@ -67,7 +67,13 @@ export default function EditTeams({
             description: description.trim(),
             projects: projects.map(project => ({
                 name: project.name,
-                description: project.description
+                description: project.description,
+                project_info: {
+                    "tasks_total": 0,
+                    "tasks_completed": 0,
+                    "tasks_due_soon": 0,
+                    "tasks_overdue": 0
+                }
             }))
         };
 
@@ -139,6 +145,7 @@ export default function EditTeams({
                 name={name}
                 description={description}
                 joinCode={joinCode}
+                onBackToDashboard={onCancel}
             />
         );
     }

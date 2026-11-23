@@ -1,8 +1,13 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Settings2 } from "lucide-react";
+import { Settings2, UserRoundCheck } from "lucide-react";
 import "./Card.css";
-import { getTaskNotifications, registerTaskNotificationHandler } from "../../lib/Supabase/supabase";
+import {
+    checkTaskAssigned,
+    getTaskNotifications,
+    registerTaskAssignmentHandler,
+    registerTaskNotificationHandler
+} from "../../lib/Supabase/supabase";
 
 function getNumberOfDaysLeft(dueDate) {
     if (!dueDate) return null;
@@ -44,6 +49,7 @@ export default function Card({
     const cardRef = useRef(null);
     const [dragWidth, setDragWidth] = useState(null);
     const [notifications, setNotifications] = useState(0);
+    const [assigned, setAssigned] = useState(false);
 
     const daysLeft = getNumberOfDaysLeft(due_date);
     const dueDateMessage = getDueDateMessage(daysLeft);
@@ -66,12 +72,23 @@ export default function Card({
             }
         );
 
+        registerTaskAssignmentHandler(
+            id,
+            (is_assigned) => {
+                setAssigned(is_assigned);
+            }
+        );
+
         getTaskNotifications(id).then((result) => {
             if (result) {
                 setNotifications(result);
             }
         });
-    }, []);
+
+        checkTaskAssigned(id).then((result) => {
+            setAssigned(result);
+        });
+    }, [id]);
 
     function handleSettingsClick(event) {
         onSettings(id);
@@ -127,6 +144,13 @@ export default function Card({
                     <Settings2 size={16} />
                 </button>
             </div>
+
+            {assigned && (
+                <div className="task-card-assigned">
+                    <UserRoundCheck size={14} strokeWidth={1.8} />
+                    <span>Assigned to You</span>
+                </div>
+            )}
         </article>
     );
 }

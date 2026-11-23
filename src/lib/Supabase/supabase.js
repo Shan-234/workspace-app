@@ -15,6 +15,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 const notifications_channel = supabase.channel("notifications_channel");
+const task_assignment_handlers = {};
 const task_notification_handlers = {};
 const project_notification_handlers = {};
 const team_notification_handlers = {};
@@ -57,6 +58,18 @@ const handleTaskNotifications = (payload) => {
     }
 };
 
+const handleTaskAssignment = (payload) => {
+    if (payload.eventType === "INSERT") {
+        if (Object.hasOwn(task_assignment_handlers, payload.new.task_id)) {
+            task_assignment_handlers[payload.new.task_id](true);
+        }
+    } else if (payload.eventType === "DELETE") {
+        if (Object.hasOwn(task_assignment_handlers, payload.old.task_id)) {
+            task_assignment_handlers[payload.old.task_id](false);
+        }
+    }
+};
+
 const joinNotificationsChannel = () => {
     if (notifications_channel.state === "joined") {
         return;
@@ -91,10 +104,17 @@ const joinNotificationsChannel = () => {
         {
             event: "DELETE",
             schema: "public",
-            table: "assignments",
-            filter: `user_id=eq.${workspace.currentUser["id"]}`
+            table: "assignments"
         },
         (payload) => {
+            if (payload.old.user_id !== workspace.currentUser["id"]) {
+                return;
+            }
+
+            if (workspace.currentProject) {
+                handleTaskAssignment(payload);
+            }
+
             if (workspace.currentTeam) {
                 handleProjectNotifications(payload);
             }
@@ -104,10 +124,32 @@ const joinNotificationsChannel = () => {
             }
         }
     )
+    .on(
+        "postgres_changes",
+        {
+            event: "INSERT",
+            schema: "public",
+            table: "assignments",
+            filter: `user_id=eq.${workspace.currentUser["id"]}`
+        },
+        (payload) => {
+            if (workspace.currentProject) {
+                handleTaskAssignment(payload);
+            }
+        }
+    )
     .subscribe((status) => {
         console.log("Notifications Channel Status:", status);
     });
 };
+
+export function clearTaskAssignmentHandlers() {
+    for (const task_id in task_assignment_handlers) {
+        if (Object.hasOwn(task_assignment_handlers, task_id)) {
+            delete task_assignment_handlers[task_id];
+        }
+    }
+}
 
 export function clearTaskNotificationHandlers() {
     for (const task_id in task_notification_handlers) {
@@ -144,6 +186,10 @@ export function registerProjectNotificationHandler(project_id, handler) {
 export function registerTaskNotificationHandler(task_id, handler) {
     task_notification_handlers[task_id] = handler;
 }
+
+export function registerTaskAssignmentHandler(task_id, handler) {
+    task_assignment_handlers[task_id] = handler;
+};
 
 export async function createAccount(user_id) {
     const username = "user_" + user_id.substring(0, 4);
@@ -314,6 +360,10 @@ export async function createNewTeam(team_info) {
             }]
         });
     
+    if (team_insert_error) {
+        throw team_insert_error;
+    }
+    
     const { error: member_insert_error } = await supabase
         .from("members")
         .insert({
@@ -322,14 +372,27 @@ export async function createNewTeam(team_info) {
             notifications: 0
         });
     
-    const { data: team_data, error: team_select_error } = await supabase
+    if (member_insert_error){
+        throw member_insert_error;
+    }
+    
+    for (let i = 0; i < team_info.projects.length; i++) {
+        team_info.projects[i]["team_id"] = team_id;
+    }
+
+    const { error: project_error } = await supabase
+        .from("projects")
+        .insert(team_info.projects)
+
+    if (project_error) {
+        throw project_error;
+    }
+
+    const { data: team_data, error: team_error } = await supabase
         .from("teams")
         .select("*")
         .eq("team_id", team_id)
         .single();
-    
-    
-    console.log(team_data);
 
     return team_data;
 }
@@ -534,6 +597,10 @@ export async function retrieveProject(project_id) {
         .eq("id", project_id)
         .single();
 
+    if (project_error) {
+        throw project_error;
+    }
+
     workspace.currentProject = {
         "id": project_data.id,
         "name": project_data.name,
@@ -547,6 +614,10 @@ export async function retrieveProject(project_id) {
         .select("id, title, description, status, priority, due_date")
         .eq("project_id", project_id);
     
+    if (tasks_error) {
+        throw tasks_error;
+    }
+
     workspace.currentProject["tasks"] = tasks_data;
 
     return workspace.currentProject;
@@ -806,8 +877,6 @@ export async function updateTask(task_updated) {
         return false;
     }
 
-    // TODO: UPDATE TASK LABELS HERE...
-
     return true;
 }
 
@@ -832,8 +901,6 @@ export async function deleteTask(task_id) {
         return false;
     }
 
-    // TODO: UPDATE LABEL ASSOCIATIONS HERE...
-
     const { error: task_error } = await supabase
         .from("tasks")
         .delete()
@@ -845,6 +912,20 @@ export async function deleteTask(task_id) {
     }
 
     return true;
+}
+
+export async function checkTaskAssigned(task_id) {
+    const { data, error } = await supabase
+        .from("assignments")
+        .select("*")
+        .eq("user_id", workspace.currentUser["id"])
+        .eq("task_id", task_id);
+    
+    if (error) {
+        throw error;
+    }
+
+    return data.length > 0;
 }
 
 export async function createNewComment(message) {

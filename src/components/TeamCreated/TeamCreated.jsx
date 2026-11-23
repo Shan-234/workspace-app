@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import "./TeamCreated.css";
 
-export default function TeamCreated({ name, description, joinCode }) {
+export default function TeamCreated({ name, description, joinCode, onBackToDashboard }) {
     const navigate = useNavigate();
     const [copied, setCopied] = useState(false);
 
@@ -23,7 +23,7 @@ export default function TeamCreated({ name, description, joinCode }) {
     };
 
     const goToDashboard = () => {
-        navigate(-1);
+        onBackToDashboard();
     };
 
     return (

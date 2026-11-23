@@ -73,6 +73,7 @@ export default function Board({
     const [assignees, setAssignees] = useState([]);
     const [memberToAdd, setMemberToAdd] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [assigneeError, setAssigneeError] = useState(false);
 
     const dialogRef = useRef(null);
     const selectedCard = useRef(null);
@@ -126,7 +127,7 @@ export default function Board({
                     table: "tasks",
                     filter: `project_id=eq.${workspace.currentProject["id"]}`
                 },
-                (payload) => {
+                payload => {
                     console.log("Task Updated:", payload);
 
                     const task_id = payload.old.id;
@@ -191,7 +192,7 @@ export default function Board({
                     table: "tasks",
                     filter: `project_id=eq.${workspace.currentProject["id"]}`
                 },
-                (payload) => {
+                payload => {
                     console.log("Task Added:", payload);
 
                     workspace.currentProject["tasks"].push({
@@ -231,7 +232,7 @@ export default function Board({
                     setNum(prev => (prev + 1) % 10);
                 }
             )
-            .subscribe((status) => {
+            .subscribe(status => {
                 console.log("Board Realtime status:", status);
             });
 
@@ -248,6 +249,7 @@ export default function Board({
         setDueDate("");
         setAssignees([]);
         setMemberToAdd("");
+        setAssigneeError(false);
     };
 
     const handleOpenCreateTask = (deckStatus = "todo") => {
@@ -293,6 +295,7 @@ export default function Board({
         });
 
         setMemberToAdd("");
+        setAssigneeError(false);
     };
 
     const handleRemoveAssignee = memberId => {
@@ -304,28 +307,40 @@ export default function Board({
     const handleCreateTask = async event => {
         event.preventDefault();
 
-        if (!title.trim() || submitting) return;
+        if (!title.trim() || !dueDate || submitting) return;
+
+        if (assignees.length === 0) {
+            setAssigneeError(true);
+            return;
+        }
+
+        setAssigneeError(false);
 
         const new_task = {
             title: title.trim(),
             description: description.trim(),
             status: status,
             priority: priority,
-            due_date: dueDate || null,
+            due_date: dueDate,
             assignees: assignees.map(member => member.id)
         };
 
         setSubmitting(true);
 
-        createTask(new_task).then(success => {
+        try {
+            const success = await createTask(new_task);
+
             if (success) {
                 setCreateTaskOpen(false);
                 resetTaskForm();
-                setSubmitting(false);
             } else {
                 console.error("Error adding task!");
             }
-        });
+        } catch (error) {
+            console.error("Error adding task:", error);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const moveTask = (task_id, new_status) => {
@@ -766,6 +781,9 @@ export default function Board({
                                     <div className="board-task-field">
                                         <label htmlFor="board-task-due-date">
                                             Due Date
+                                            <span className="board-task-required">
+                                                *
+                                            </span>
                                         </label>
 
                                         <div className="board-task-date-wrapper">
@@ -778,6 +796,7 @@ export default function Board({
                                                 onChange={event =>
                                                     setDueDate(event.target.value)
                                                 }
+                                                required
                                             />
                                         </div>
                                     </div>
@@ -785,6 +804,9 @@ export default function Board({
                                     <div className="board-task-field">
                                         <label htmlFor="board-task-member-select">
                                             Assign To
+                                            <span className="board-task-required">
+                                                *
+                                            </span>
                                         </label>
 
                                         <div className="board-task-member-row">
@@ -857,6 +879,15 @@ export default function Board({
                                                     </button>
                                                 </div>
                                             ))}
+
+                                            {assigneeError && (
+                                                <p
+                                                    className="board-task-validation-error"
+                                                    role="alert"
+                                                >
+                                                    Please assign this task to at least one team member.
+                                                </p>
+                                            )}
 
                                             {assignees.length === 0 && (
                                                 <p className="board-task-no-assignees">

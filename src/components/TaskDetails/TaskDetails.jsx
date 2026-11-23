@@ -35,7 +35,7 @@ function createDraft(task) {
         status: task?.status ?? "todo",
         priority: task?.priority ?? "medium",
         due_date: task?.due_date ?? "",
-        assignees: (task?.assignees ?? []).map((member) => ({
+        assignees: (task?.assignees ?? []).map(member => ({
             ...member
         })),
         label_ids: [...(task?.label_ids ?? [])]
@@ -227,7 +227,7 @@ export default function TaskDetails({
         markReadRef.current = markRead;
 
         const channel = supabase
-            .channel(`project-${workspace.currentProject["id"]}`)
+            .channel(`project-${projectId}`)
             .on(
                 "broadcast",
                 {
@@ -242,7 +242,7 @@ export default function TaskDetails({
 
                     if (project?.id === projectId) {
                         const index = project.tasks?.findIndex(
-                            (item) => item.id === taskId
+                            item => item.id === taskId
                         );
 
                         if (index >= 0) {
@@ -259,34 +259,54 @@ export default function TaskDetails({
                     event: "UPDATE",
                     schema: "public",
                     table: "tasks",
-                    filter: `project_id=eq.${workspace.currentProject["id"]}`
+                    filter: `project_id=eq.${projectId}`
                 },
-                (payload) => {
+                payload => {
                     console.log("Task Updated:", payload);
-                    const task_id = payload.old.id;
 
-                    for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-                        if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                            if (workspace.currentProject["tasks"][i]["status"] !== payload.new.status) {
+                    const task_id = payload.old.id;
+                    const tasks = workspace.currentProject?.tasks ?? [];
+
+                    for (let i = 0; i < tasks.length; i++) {
+                        if (tasks[i].id === task_id) {
+                            if (tasks[i].status !== payload.new.status) {
                                 moveTask(task_id, payload.new.status);
                             }
 
-                            if (workspace.currentProject["tasks"][i]["title"] !== payload.new.title) {
+                            if (tasks[i].title !== payload.new.title) {
                                 changeTaskTitle(task_id, payload.new.title);
                             }
 
-                            if (workspace.currentProject["tasks"][i]["description"] !== payload.new.description) {
-                                changeTaskDescription(task_id, payload.new.description);
+                            if (
+                                tasks[i].description !==
+                                payload.new.description
+                            ) {
+                                changeTaskDescription(
+                                    task_id,
+                                    payload.new.description
+                                );
                             }
 
-                            if (workspace.currentProject["tasks"][i]["due_date"] !== payload.new.due_date) {
-                                changeTaskDueDate(task_id, payload.new.due_date);
+                            if (
+                                tasks[i].due_date !==
+                                payload.new.due_date
+                            ) {
+                                changeTaskDueDate(
+                                    task_id,
+                                    payload.new.due_date
+                                );
                             }
 
-                            if (workspace.currentProject["tasks"][i]["priority"] !== payload.new.priority) {
-                                changeTaskPriority(task_id, payload.new.priority);
+                            if (
+                                tasks[i].priority !==
+                                payload.new.priority
+                            ) {
+                                changeTaskPriority(
+                                    task_id,
+                                    payload.new.priority
+                                );
                             }
-                            
+
                             break;
                         }
                     }
@@ -300,11 +320,11 @@ export default function TaskDetails({
                     table: "assignments",
                     filter: `user_id=eq.${userId}`
                 },
-                (payload) => {
+                payload => {
                     void handleAssignmentUpdate(payload);
                 }
             )
-            .subscribe((status) => {
+            .subscribe(status => {
                 console.log(
                     "Task Details Realtime status:",
                     status
@@ -312,7 +332,7 @@ export default function TaskDetails({
             });
 
         void refreshComments()
-            .then((success) => {
+            .then(success => {
                 if (
                     success &&
                     !disposed &&
@@ -321,7 +341,7 @@ export default function TaskDetails({
                     void markRead("comments");
                 }
             })
-            .catch((error) => {
+            .catch(error => {
                 console.error(
                     "Error loading initial comments:",
                     error
@@ -336,45 +356,45 @@ export default function TaskDetails({
     }, [taskId, projectId, userId]);
 
     const moveTask = (task_id, new_status) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                workspace.currentProject["tasks"][i]["status"] = new_status;
+        for (const task of workspace.currentProject?.tasks ?? []) {
+            if (task.id === task_id) {
+                task.status = new_status;
                 break;
             }
         }
     };
 
     const changeTaskTitle = (task_id, new_title) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                workspace.currentProject["tasks"][i]["title"] = new_title;
+        for (const task of workspace.currentProject?.tasks ?? []) {
+            if (task.id === task_id) {
+                task.title = new_title;
                 break;
             }
         }
     };
 
     const changeTaskDescription = (task_id, new_description) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                workspace.currentProject["tasks"][i]["description"] = new_description;
+        for (const task of workspace.currentProject?.tasks ?? []) {
+            if (task.id === task_id) {
+                task.description = new_description;
                 break;
             }
         }
     };
 
     const changeTaskDueDate = (task_id, new_due_date) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                workspace.currentProject["tasks"][i]["due_date"] = new_due_date;
+        for (const task of workspace.currentProject?.tasks ?? []) {
+            if (task.id === task_id) {
+                task.due_date = new_due_date;
                 break;
             }
         }
     };
 
     const changeTaskPriority = (task_id, new_priority) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                workspace.currentProject["tasks"][i]["priority"] = new_priority;
+        for (const task of workspace.currentProject?.tasks ?? []) {
+            if (task.id === task_id) {
+                task.priority = new_priority;
                 break;
             }
         }
@@ -390,7 +410,7 @@ export default function TaskDetails({
                 : refreshComments;
 
         void refresh()
-            .then((success) => {
+            .then(success => {
                 if (
                     success &&
                     activeTabRef.current === tab
@@ -398,7 +418,7 @@ export default function TaskDetails({
                     void markReadRef.current?.(tab);
                 }
             })
-            .catch((error) => {
+            .catch(error => {
                 console.error(
                     "Error opening activity tab:",
                     error
@@ -413,44 +433,44 @@ export default function TaskDetails({
         workspace.currentTeam?.labels ?? [];
 
     function updateField(field, value) {
-        setTask((previous) => ({
+        setTask(previous => ({
             ...previous,
             [field]: value
         }));
     }
 
-    function toggleAssignee(member) {
-        setTask((previous) => {
+    function addAssignee(member) {
+        setTask(previous => {
             const exists = previous.assignees.some(
-                (assignee) => assignee.id === member.id
+                assignee => assignee.id === member.id
             );
+
+            if (exists) {
+                return previous;
+            }
 
             return {
                 ...previous,
-                assignees: exists
-                    ? previous.assignees.filter(
-                        (assignee) => assignee.id !== member.id
-                    )
-                    : [
-                        ...previous.assignees,
-                        {
-                            id: member.id,
-                            username: member.username
-                        }
-                    ]
+                assignees: [
+                    ...previous.assignees,
+                    {
+                        id: member.id,
+                        username: member.username
+                    }
+                ]
             };
         });
     }
 
     function toggleLabel(labelId) {
-        setTask((previous) => {
+        setTask(previous => {
             const exists = previous.label_ids.includes(labelId);
 
             return {
                 ...previous,
                 label_ids: exists
                     ? previous.label_ids.filter(
-                        (id) => id !== labelId
+                        id => id !== labelId
                     )
                     : [...previous.label_ids, labelId]
             };
@@ -459,7 +479,7 @@ export default function TaskDetails({
 
     function getLabel(labelId) {
         return availableLabels.find(
-            (label) => label.id === labelId
+            label => label.id === labelId
         );
     }
 
@@ -479,7 +499,7 @@ export default function TaskDetails({
             status: task.status,
             priority: task.priority,
             due_date: task.due_date || null,
-            assignees: task.assignees.map((member) => ({
+            assignees: task.assignees.map(member => ({
                 ...member
             })),
             label_ids: [...task.label_ids]
@@ -531,7 +551,7 @@ export default function TaskDetails({
                             id="task-details-title"
                             type="text"
                             value={task.title}
-                            onChange={(event) =>
+                            onChange={event =>
                                 updateField(
                                     "title",
                                     event.target.value
@@ -551,7 +571,7 @@ export default function TaskDetails({
                                 <textarea
                                     id="task-details-description"
                                     value={task.description}
-                                    onChange={(event) =>
+                                    onChange={event =>
                                         updateField(
                                             "description",
                                             event.target.value
@@ -570,14 +590,14 @@ export default function TaskDetails({
                                 <select
                                     id="task-details-status"
                                     value={task.status}
-                                    onChange={(event) =>
+                                    onChange={event =>
                                         updateField(
                                             "status",
                                             event.target.value
                                         )
                                     }
                                 >
-                                    {STATUS_OPTIONS.map((option) => (
+                                    {STATUS_OPTIONS.map(option => (
                                         <option
                                             key={option.value}
                                             value={option.value}
@@ -596,14 +616,14 @@ export default function TaskDetails({
                                 <select
                                     id="task-details-priority"
                                     value={task.priority}
-                                    onChange={(event) =>
+                                    onChange={event =>
                                         updateField(
                                             "priority",
                                             event.target.value
                                         )
                                     }
                                 >
-                                    {PRIORITY_OPTIONS.map((option) => (
+                                    {PRIORITY_OPTIONS.map(option => (
                                         <option
                                             key={option.value}
                                             value={option.value}
@@ -623,7 +643,7 @@ export default function TaskDetails({
                                     id="task-details-date"
                                     type="date"
                                     value={task.due_date ?? ""}
-                                    onChange={(event) =>
+                                    onChange={event =>
                                         updateField(
                                             "due_date",
                                             event.target.value
@@ -638,7 +658,7 @@ export default function TaskDetails({
                                 <label>Assign To</label>
 
                                 <div className="task-details-chips">
-                                    {task.assignees.map((assignee) => (
+                                    {task.assignees.map(assignee => (
                                         <span
                                             className="task-details-chip"
                                             key={assignee.id}
@@ -646,16 +666,6 @@ export default function TaskDetails({
                                             <span>
                                                 {assignee.username}
                                             </span>
-
-                                            <button
-                                                type="button"
-                                                aria-label={`Remove ${assignee.username}`}
-                                                onClick={() =>
-                                                    toggleAssignee(assignee)
-                                                }
-                                            >
-                                                ×
-                                            </button>
                                         </span>
                                     ))}
                                 </div>
@@ -666,7 +676,7 @@ export default function TaskDetails({
                                         className="task-details-add-button"
                                         onClick={() => {
                                             setShowAssignees(
-                                                (value) => !value
+                                                value => !value
                                             );
                                             setShowLabels(false);
                                         }}
@@ -681,35 +691,34 @@ export default function TaskDetails({
                                                     No members available
                                                 </p>
                                             ) : (
-                                                availableMembers.map(
-                                                    (member) => {
-                                                        const selected =
-                                                            task.assignees.some(
-                                                                (assignee) =>
-                                                                    assignee.id === member.id
-                                                            );
-
-                                                        return (
-                                                            <button
-                                                                type="button"
-                                                                key={member.id}
-                                                                onClick={() =>
-                                                                    toggleAssignee(member)
-                                                                }
-                                                            >
-                                                                <span>
-                                                                    {member.username}
-                                                                </span>
-
-                                                                {selected && (
-                                                                    <span className="task-details-check">
-                                                                        ✓
-                                                                    </span>
-                                                                )}
-                                                            </button>
+                                                availableMembers.map(member => {
+                                                    const selected =
+                                                        task.assignees.some(
+                                                            assignee =>
+                                                                assignee.id === member.id
                                                         );
-                                                    }
-                                                )
+
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            key={member.id}
+                                                            onClick={() =>
+                                                                addAssignee(member)
+                                                            }
+                                                            disabled={selected}
+                                                        >
+                                                            <span>
+                                                                {member.username}
+                                                            </span>
+
+                                                            {selected && (
+                                                                <span className="task-details-check">
+                                                                    ✓
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })
                                             )}
                                         </div>
                                     )}
@@ -720,7 +729,7 @@ export default function TaskDetails({
                                 <label>Labels</label>
 
                                 <div className="task-details-chips">
-                                    {task.label_ids.map((labelId) => {
+                                    {task.label_ids.map(labelId => {
                                         const label = getLabel(labelId);
 
                                         return (
@@ -752,7 +761,7 @@ export default function TaskDetails({
                                         className="task-details-add-button"
                                         onClick={() => {
                                             setShowLabels(
-                                                (value) => !value
+                                                value => !value
                                             );
                                             setShowAssignees(false);
                                         }}
@@ -767,34 +776,32 @@ export default function TaskDetails({
                                                     No labels available
                                                 </p>
                                             ) : (
-                                                availableLabels.map(
-                                                    (label) => {
-                                                        const selected =
-                                                            task.label_ids.includes(
-                                                                label.id
-                                                            );
-
-                                                        return (
-                                                            <button
-                                                                type="button"
-                                                                key={label.id}
-                                                                onClick={() =>
-                                                                    toggleLabel(label.id)
-                                                                }
-                                                            >
-                                                                <span>
-                                                                    {label.name}
-                                                                </span>
-
-                                                                {selected && (
-                                                                    <span className="task-details-check">
-                                                                        ✓
-                                                                    </span>
-                                                                )}
-                                                            </button>
+                                                availableLabels.map(label => {
+                                                    const selected =
+                                                        task.label_ids.includes(
+                                                            label.id
                                                         );
-                                                    }
-                                                )
+
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            key={label.id}
+                                                            onClick={() =>
+                                                                toggleLabel(label.id)
+                                                            }
+                                                        >
+                                                            <span>
+                                                                {label.name}
+                                                            </span>
+
+                                                            {selected && (
+                                                                <span className="task-details-check">
+                                                                    ✓
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })
                                             )}
                                         </div>
                                     )}
