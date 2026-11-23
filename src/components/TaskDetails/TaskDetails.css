@@ -553,3 +553,25 @@
 
     flex-shrink: 0;
 }
+
+/* Task creator information */
+
+.task-details-creator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.task-details-creator-label {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.task-details-creator-name {
+    color: #c7d2fe;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}

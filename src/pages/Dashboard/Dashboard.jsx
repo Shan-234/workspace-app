@@ -1,10 +1,16 @@
 
 import { useState, useEffect, useRef } from "react";
-import Label from "../../components/Label/Label";
 import Team from "../../components/Team/Team";
 import "./Dashboard.css";
 import { useLocation, useNavigate } from "react-router";
-import { createAccount, editUsername, getUserProgress, retrieveAccount, supabase, workspace } from "../../lib/Supabase/supabase";
+import {
+    createAccount,
+    editUsername,
+    getUserProgress,
+    retrieveAccount,
+    supabase,
+    workspace
+} from "../../lib/Supabase/supabase";
 import EditTeams from "../../components/EditTeams/EditTeams";
 
 function AnimatedPage({
@@ -150,7 +156,6 @@ export default function Dashboard() {
 
     const [userId, setUserId] = useState("");
     const [username, setUsername] = useState("");
-    const [userLabels, setUserLabels] = useState({});
     const [userTeams, setUserTeams] = useState({});
     const [userProgress, setUserProgress] = useState({
         tasks_completed: "...",
@@ -160,25 +165,21 @@ export default function Dashboard() {
     });
     const [loading, setLoading] = useState(true);
 
-    // Username dialog state
     const [showUsernameDialog, setShowUsernameDialog] = useState(false);
     const [newUsername, setNewUsername] = useState("");
 
     const slidesRef = useRef(null);
     const [activeSlide, setActiveSlide] = useState(0);
 
-    const labelPageSize = 16;
     const teamPageSize = 12;
 
     const slideItems = [
         { id: "progress-info", name: "Overview" },
-        { id: "labels", name: "Organization" },
         { id: "teams", name: "Collaboration" }
     ];
 
     const initializeUserInformation = () => {
         setUsername(workspace.currentUser["username"]);
-        setUserLabels(workspace.currentUser["user_labels"]);
         setUserTeams(workspace.currentUser["user_teams"]);
 
         getUserProgress().then((result) => {
@@ -213,7 +214,6 @@ export default function Dashboard() {
         }
     }, []);
 
-    // Username dialog handlers
     const openUsernameDialog = () => {
         setNewUsername(username);
         setShowUsernameDialog(true);
@@ -258,7 +258,6 @@ export default function Dashboard() {
         });
     };
 
-    // Updated: initialize slides only after loading finishes.
     useEffect(() => {
         if (loading) return;
 
@@ -342,7 +341,13 @@ export default function Dashboard() {
     }
 
     if (editTeams) {
-        return <EditTeams onCancel={() => { window.location.reload() }} />;
+        return (
+            <EditTeams
+                onCancel={() => {
+                    window.location.reload();
+                }}
+            />
+        );
     }
 
     return (
@@ -354,13 +359,16 @@ export default function Dashboard() {
                             <p className="dashboard-eyebrow">
                                 WORKSPACE / DASHBOARD
                             </p>
+
                             <h1>
                                 Welcome, <span>{username}</span>
                             </h1>
+
                             <p className="dashboard-subtitle">
                                 Here's what's happening with your workspace.
                             </p>
                         </div>
+
                         <button
                             type="button"
                             className="dashboard-button"
@@ -408,6 +416,7 @@ export default function Dashboard() {
                                         <span className="slide-nav-number">
                                             {String(index + 1).padStart(2, "0")}
                                         </span>
+
                                         <span className="slide-nav-name">
                                             {slide.name}
                                         </span>
@@ -420,7 +429,9 @@ export default function Dashboard() {
                             <span className="slide-nav-current">
                                 {String(activeSlide + 1).padStart(2, "0")}
                             </span>
+
                             <span className="slide-nav-separator">/</span>
+
                             <span>
                                 {String(slideItems.length).padStart(2, "0")}
                             </span>
@@ -443,43 +454,69 @@ export default function Dashboard() {
                                             <p className="dashboard-section-eyebrow">
                                                 01 / OVERVIEW
                                             </p>
+
                                             <h2>Your Progress</h2>
                                         </div>
+
                                         <span className="dashboard-overview-badge">
                                             Overview
                                         </span>
                                     </div>
 
                                     <div className="dashboard-stats">
-                                        <div id="total-tasks" className="dashboard-stat-card">
+                                        <div
+                                            id="total-tasks"
+                                            className="dashboard-stat-card"
+                                        >
                                             <div className="stat-header">
                                                 <h3>Total Tasks</h3>
-                                                <span className="stat-icon stat-purple">▦</span>
+                                                <span className="stat-icon stat-purple">
+                                                    ▦
+                                                </span>
                                             </div>
+
                                             <h1>{userProgress.tasks_total}</h1>
                                         </div>
 
-                                        <div id="tasks-completed" className="dashboard-stat-card">
+                                        <div
+                                            id="tasks-completed"
+                                            className="dashboard-stat-card"
+                                        >
                                             <div className="stat-header">
                                                 <h3>Tasks Completed</h3>
-                                                <span className="stat-icon stat-green">✓</span>
+                                                <span className="stat-icon stat-green">
+                                                    ✓
+                                                </span>
                                             </div>
+
                                             <h1>{userProgress.tasks_completed}</h1>
                                         </div>
 
-                                        <div id="tasks-due-soon" className="dashboard-stat-card">
+                                        <div
+                                            id="tasks-due-soon"
+                                            className="dashboard-stat-card"
+                                        >
                                             <div className="stat-header">
                                                 <h3>Tasks Due Soon</h3>
-                                                <span className="stat-icon stat-yellow">◷</span>
+                                                <span className="stat-icon stat-yellow">
+                                                    ◷
+                                                </span>
                                             </div>
+
                                             <h1>{userProgress.tasks_due_soon}</h1>
                                         </div>
 
-                                        <div id="tasks-overdue" className="dashboard-stat-card">
+                                        <div
+                                            id="tasks-overdue"
+                                            className="dashboard-stat-card"
+                                        >
                                             <div className="stat-header">
                                                 <h3>Tasks Overdue</h3>
-                                                <span className="stat-icon stat-red">!</span>
+                                                <span className="stat-icon stat-red">
+                                                    !
+                                                </span>
                                             </div>
+
                                             <h1>{userProgress.tasks_overdue}</h1>
                                         </div>
                                     </div>
@@ -487,70 +524,30 @@ export default function Dashboard() {
                             </div>
                         </section>
 
-                        <section id="labels" className="dashboard-slide">
+                        <section
+                            id="teams"
+                            className="dashboard-slide"
+                        >
                             <div className="dashboard-slide-inner">
                                 <div className="dashboard-slide-content">
                                     <div className="dashboard-section-header">
                                         <div>
                                             <p className="dashboard-section-eyebrow">
-                                                02 / ORGANIZATION
+                                                02 / COLLABORATION
                                             </p>
-                                            <h2>Your Labels</h2>
-                                            <p className="dashboard-section-subtitle">
-                                                Organize your work with custom labels
-                                            </p>
-                                        </div>
-                                        <button className="dashboard-button">
-                                            Edit
-                                        </button>
-                                    </div>
 
-                                    {Object.keys(userLabels).length > 0 ? (
-                                        <AnimatedPage
-                                            items={Object.entries(userLabels).map(([id, label]) => ({
-                                                id: Number(id),
-                                                ...label
-                                            }))}
-                                            pageSize={labelPageSize}
-                                            gridClassName="dashboard-labels-list"
-                                            itemName="labels"
-                                            renderItem={label => (
-                                                <Label
-                                                    key={label.id}
-                                                    name={label.name}
-                                                    color={label.color}
-                                                    size="medium"
-                                                />
-                                            )}
-                                        />
-                                    ) : (
-                                        <div className="dashboard-labels-empty">
-                                            <h3>You haven't created any labels yet</h3>
-                                            <p>
-                                                Click <strong>Edit</strong> to create labels and organize your tasks.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </section>
-
-                        <section id="teams" className="dashboard-slide">
-                            <div className="dashboard-slide-inner">
-                                <div className="dashboard-slide-content">
-                                    <div className="dashboard-section-header">
-                                        <div>
-                                            <p className="dashboard-section-eyebrow">
-                                                03 / COLLABORATION
-                                            </p>
                                             <h2>Your Teams</h2>
+
                                             <p className="dashboard-section-subtitle">
                                                 Access your shared workspaces
                                             </p>
                                         </div>
+
                                         <button
                                             className="dashboard-button"
-                                            onClick={() => { setEditTeams(true); }}
+                                            onClick={() => {
+                                                setEditTeams(true);
+                                            }}
                                         >
                                             Edit
                                         </button>
@@ -558,10 +555,12 @@ export default function Dashboard() {
 
                                     {Object.keys(userTeams).length > 0 ? (
                                         <AnimatedPage
-                                            items={Object.entries(userTeams).map(([id, team]) => ({
-                                                id: id,
-                                                ...team
-                                            }))}
+                                            items={Object.entries(userTeams).map(
+                                                ([id, team]) => ({
+                                                    id: id,
+                                                    ...team
+                                                })
+                                            )}
                                             pageSize={teamPageSize}
                                             gridClassName="dashboard-teams-list"
                                             itemName="teams"
@@ -576,9 +575,13 @@ export default function Dashboard() {
                                         />
                                     ) : (
                                         <div className="dashboard-teams-empty">
-                                            <h3>You haven't joined any teams yet</h3>
+                                            <h3>
+                                                You haven't joined any teams yet
+                                            </h3>
+
                                             <p>
-                                                Click <strong>Edit</strong> to join a team and start collaborating.
+                                                Click <strong>Edit</strong> to
+                                                join a team and start collaborating.
                                             </p>
                                         </div>
                                     )}
@@ -615,7 +618,9 @@ export default function Dashboard() {
                                     id="new-username"
                                     type="text"
                                     value={newUsername}
-                                    onChange={e => setNewUsername(e.target.value)}
+                                    onChange={e =>
+                                        setNewUsername(e.target.value)
+                                    }
                                     placeholder="Enter your username"
                                     autoFocus
                                     required

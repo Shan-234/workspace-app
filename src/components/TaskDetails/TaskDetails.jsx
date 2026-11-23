@@ -37,8 +37,7 @@ function createDraft(task) {
         due_date: task?.due_date ?? "",
         assignees: (task?.assignees ?? []).map(member => ({
             ...member
-        })),
-        label_ids: [...(task?.label_ids ?? [])]
+        }))
     };
 }
 
@@ -51,12 +50,14 @@ export default function TaskDetails({
     const projectId = workspace.currentProject?.id;
     const userId = workspace.currentUser?.id;
 
+    const creatorUsername =
+        workspace.currentTask?.["creator_username"] ?? "Unknown";
+
     const [task, setTask] = useState(() =>
         createDraft(workspace.currentTask)
     );
 
     const [showAssignees, setShowAssignees] = useState(false);
-    const [showLabels, setShowLabels] = useState(false);
     const [deleteConfirmation, setDeleteConfirmation] = useState(false);
     const [taskDeleted, setTaskDeleted] = useState(false);
 
@@ -89,7 +90,6 @@ export default function TaskDetails({
         setTask(createDraft(workspace.currentTask));
 
         setShowAssignees(false);
-        setShowLabels(false);
         setDeleteConfirmation(false);
         setTaskDeleted(false);
 
@@ -356,45 +356,45 @@ export default function TaskDetails({
     }, [taskId, projectId, userId]);
 
     const moveTask = (task_id, new_status) => {
-        for (const task of workspace.currentProject?.tasks ?? []) {
-            if (task.id === task_id) {
-                task.status = new_status;
+        for (const item of workspace.currentProject?.tasks ?? []) {
+            if (item.id === task_id) {
+                item.status = new_status;
                 break;
             }
         }
     };
 
     const changeTaskTitle = (task_id, new_title) => {
-        for (const task of workspace.currentProject?.tasks ?? []) {
-            if (task.id === task_id) {
-                task.title = new_title;
+        for (const item of workspace.currentProject?.tasks ?? []) {
+            if (item.id === task_id) {
+                item.title = new_title;
                 break;
             }
         }
     };
 
     const changeTaskDescription = (task_id, new_description) => {
-        for (const task of workspace.currentProject?.tasks ?? []) {
-            if (task.id === task_id) {
-                task.description = new_description;
+        for (const item of workspace.currentProject?.tasks ?? []) {
+            if (item.id === task_id) {
+                item.description = new_description;
                 break;
             }
         }
     };
 
     const changeTaskDueDate = (task_id, new_due_date) => {
-        for (const task of workspace.currentProject?.tasks ?? []) {
-            if (task.id === task_id) {
-                task.due_date = new_due_date;
+        for (const item of workspace.currentProject?.tasks ?? []) {
+            if (item.id === task_id) {
+                item.due_date = new_due_date;
                 break;
             }
         }
     };
 
     const changeTaskPriority = (task_id, new_priority) => {
-        for (const task of workspace.currentProject?.tasks ?? []) {
-            if (task.id === task_id) {
-                task.priority = new_priority;
+        for (const item of workspace.currentProject?.tasks ?? []) {
+            if (item.id === task_id) {
+                item.priority = new_priority;
                 break;
             }
         }
@@ -429,9 +429,6 @@ export default function TaskDetails({
     const availableMembers =
         workspace.currentTeam?.team_members ?? [];
 
-    const availableLabels =
-        workspace.currentTeam?.labels ?? [];
-
     function updateField(field, value) {
         setTask(previous => ({
             ...previous,
@@ -462,27 +459,6 @@ export default function TaskDetails({
         });
     }
 
-    function toggleLabel(labelId) {
-        setTask(previous => {
-            const exists = previous.label_ids.includes(labelId);
-
-            return {
-                ...previous,
-                label_ids: exists
-                    ? previous.label_ids.filter(
-                        id => id !== labelId
-                    )
-                    : [...previous.label_ids, labelId]
-            };
-        });
-    }
-
-    function getLabel(labelId) {
-        return availableLabels.find(
-            label => label.id === labelId
-        );
-    }
-
     function handleSave() {
         if (!task.title.trim()) {
             alert("Task title cannot be empty.");
@@ -501,8 +477,7 @@ export default function TaskDetails({
             due_date: task.due_date || null,
             assignees: task.assignees.map(member => ({
                 ...member
-            })),
-            label_ids: [...task.label_ids]
+            }))
         });
 
         onSaveChanges(task);
@@ -536,9 +511,20 @@ export default function TaskDetails({
             <section className="task-details-editor">
                 <header className="task-details-heading">
                     <h2>Edit Task</h2>
+
                     <p>
                         Manage task information and assignments
                     </p>
+
+                    <div className="task-details-creator">
+                        <span className="task-details-creator-label">
+                            Created by
+                        </span>
+
+                        <span className="task-details-creator-name">
+                            {creatorUsername}
+                        </span>
+                    </div>
                 </header>
 
                 <div className="task-details-form">
@@ -678,7 +664,6 @@ export default function TaskDetails({
                                             setShowAssignees(
                                                 value => !value
                                             );
-                                            setShowLabels(false);
                                         }}
                                     >
                                         + Add
@@ -709,89 +694,6 @@ export default function TaskDetails({
                                                         >
                                                             <span>
                                                                 {member.username}
-                                                            </span>
-
-                                                            {selected && (
-                                                                <span className="task-details-check">
-                                                                    ✓
-                                                                </span>
-                                                            )}
-                                                        </button>
-                                                    );
-                                                })
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="task-details-field">
-                                <label>Labels</label>
-
-                                <div className="task-details-chips">
-                                    {task.label_ids.map(labelId => {
-                                        const label = getLabel(labelId);
-
-                                        return (
-                                            <span
-                                                className="task-details-chip task-details-label-chip"
-                                                key={labelId}
-                                            >
-                                                <span>
-                                                    {label?.name ?? "Unknown Label"}
-                                                </span>
-
-                                                <button
-                                                    type="button"
-                                                    aria-label="Remove label"
-                                                    onClick={() =>
-                                                        toggleLabel(labelId)
-                                                    }
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-
-                                <div className="task-details-menu-container">
-                                    <button
-                                        type="button"
-                                        className="task-details-add-button"
-                                        onClick={() => {
-                                            setShowLabels(
-                                                value => !value
-                                            );
-                                            setShowAssignees(false);
-                                        }}
-                                    >
-                                        + Add
-                                    </button>
-
-                                    {showLabels && (
-                                        <div className="task-details-dropdown">
-                                            {availableLabels.length === 0 ? (
-                                                <p className="task-details-dropdown-empty">
-                                                    No labels available
-                                                </p>
-                                            ) : (
-                                                availableLabels.map(label => {
-                                                    const selected =
-                                                        task.label_ids.includes(
-                                                            label.id
-                                                        );
-
-                                                    return (
-                                                        <button
-                                                            type="button"
-                                                            key={label.id}
-                                                            onClick={() =>
-                                                                toggleLabel(label.id)
-                                                            }
-                                                        >
-                                                            <span>
-                                                                {label.name}
                                                             </span>
 
                                                             {selected && (
