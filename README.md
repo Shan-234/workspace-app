@@ -113,7 +113,7 @@ You can now access Workspace in your browser.
 
 Workspace is deployed using Vercel.
 
-**Live Application:** [https://workspace-app-pi.vercel.app](https://workspace-app-pi.vercel.app)
+**Live Application:** [https://workspace-app-olive.vercel.app](https://workspace-app-olive.vercel.app)
 
 To deploy your own instance, configure the Supabase environment variables in your hosting provider and build the application using:
 
