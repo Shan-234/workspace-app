@@ -612,3 +612,310 @@
         margin-top: 24px;
     }
 }
+
+
+.board {
+    position: relative;
+    overflow: hidden;
+}
+
+.board-slide-viewport {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.board-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    transition:
+        transform 550ms cubic-bezier(.22, 1, .36, 1),
+        opacity 350ms ease;
+}
+
+.board-slide-main {
+    transform: translateY(0);
+}
+
+.board-slide-main.board-slide-above {
+    transform: translateY(-100%);
+    pointer-events: none;
+}
+
+.board-slide-main .board-decks {
+    flex: 1;
+    min-height: 0;
+    margin-top: 24px;
+}
+
+.board-slide-progress {
+    transform: translateY(100%);
+    opacity: .8;
+    padding: 36px 110px 40px 32px;
+    background: #101827;
+    overflow-y: auto;
+    pointer-events: none;
+}
+
+.board-slide-progress.board-slide-visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.board-progress-heading {
+    margin-bottom: 28px;
+}
+
+.board-progress-heading h2 {
+    margin: 10px 0 6px;
+    color: #f1f5ff;
+    font-size: clamp(23px, 2.6vw, 34px);
+    font-weight: 600;
+    letter-spacing: -.6px;
+}
+
+.board-progress-heading p {
+    margin: 0;
+    color: #8794ad;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.board-progress-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(140px, 1fr));
+    gap: 18px;
+    flex: 1;
+    min-height: 310px;
+}
+
+.board-progress-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 24px;
+    background: #151c2e;
+    border: 1px solid #29344b;
+    border-radius: 16px;
+    color: #a5b3cc;
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        transform .2s ease;
+}
+
+.board-progress-tile:hover {
+    background: #192238;
+    transform: translateY(-2px);
+}
+
+.board-progress-tile span {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.board-progress-tile strong {
+    color: #f1f5ff;
+    font-size: clamp(30px, 4vw, 52px);
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.board-progress-completed {
+    border-color: #255b48;
+    color: #4ade80;
+}
+
+.board-progress-completed:hover {
+    border-color: #378264;
+}
+
+.board-progress-soon {
+    border-color: #685124;
+    color: #facc15;
+}
+
+.board-progress-soon:hover {
+    border-color: #92702e;
+}
+
+.board-progress-overdue {
+    border-color: #71323c;
+    color: #fb7185;
+}
+
+.board-progress-overdue:hover {
+    border-color: #a14555;
+}
+
+.board-slide-switcher {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 8px;
+    background: #192238;
+    border: 1px solid #344058;
+    border-radius: 14px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, .3);
+}
+
+.board-slide-switcher .board-slide-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 72px;
+    min-height: 54px;
+    padding: 8px 5px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #8794ad;
+    font: inherit;
+    cursor: pointer;
+    transition:
+        background .2s ease,
+        color .2s ease;
+}
+
+.board-slide-option-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .2px;
+    white-space: nowrap;
+}
+
+.board-slide-switcher .board-slide-option.active {
+    background: rgba(99, 102, 241, .17);
+    color: #c7c7ff;
+}
+
+.board-slide-switcher .board-slide-option:not(.active):hover {
+    background: #26324a;
+    color: #dce4f5;
+}
+
+.board-slide-switcher .board-slide-option:focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: 2px;
+}
+
+.board-slide-switcher-track {
+    position: relative;
+    width: 3px;
+    height: 30px;
+    border-radius: 10px;
+    background: #344058;
+}
+
+.board-slide-switcher-track span {
+    position: absolute;
+    top: 0;
+    left: -2px;
+    width: 7px;
+    height: 13px;
+    border-radius: 10px;
+    background: #818cf8;
+    transition: transform 450ms ease;
+}
+
+.board-slide-switcher-track span.at-bottom {
+    transform: translateY(17px);
+}
+
+@media (max-width: 700px) {
+    .board-slide-progress {
+        padding: 24px 105px 24px 16px;
+    }
+
+    .board-progress-grid {
+        gap: 10px;
+    }
+
+    .board-progress-tile {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .board-progress-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        min-height: 0;
+    }
+
+    .board-progress-tile {
+        min-height: 130px;
+    }
+
+    .board-progress-heading {
+        margin-bottom: 20px;
+    }
+
+    .board-slide-switcher {
+        right: 6px;
+    }
+
+    .board-slide-switcher .board-slide-option {
+        width: 62px;
+    }
+
+    .board-slide-progress {
+        padding-right: 88px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .board-slide,
+    .board-slide-switcher-track span,
+    .board-progress-tile {
+        transition: none;
+    }
+}
+
+.board-delete-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 14px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 9px;
+    color: #fb7185;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.board-delete-button:hover {
+    background: rgba(239, 68, 68, 0.16);
+    border-color: #fb7185;
+}
+
+.board-delete-button:focus-visible {
+    outline: 2px solid #fb7185;
+    outline-offset: 2px;
+}

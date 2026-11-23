@@ -1,25 +1,29 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-    SlidersHorizontal,
-    Settings2,
+    Trash2,
     X,
     Plus,
     CalendarDays,
     Check,
-    ClipboardList
+    ClipboardList,
+    ChevronUp,
+    ChevronDown,
+    ListTodo,
+    CircleCheck,
+    Clock3,
+    AlertTriangle
 } from "lucide-react";
 import Deck from "../Deck/Deck";
-import { supabase, createTask, updateTaskStatus, workspace } from "../../lib/Supabase/supabase";
+import {
+    supabase,
+    createTask,
+    updateTaskStatus,
+    workspace
+} from "../../lib/Supabase/supabase";
 import "./Board.css";
-import { create } from "motion/react-m";
 
-const statuses = [
-    "todo",
-    "in_progress",
-    "in_review",
-    "done"
-];
+const statuses = ["todo", "in_progress", "in_review", "done"];
 
 const statusLabels = {
     todo: "To Do",
@@ -54,11 +58,10 @@ function FindResultDeck(mouseX, mouseY) {
 export default function Board({
     project_name = "Untitled Project",
     onAddTask,
-    onTaskSettings,
-    onProjectSettings
+    onTaskSettings
 }) {
     const [num, setNum] = useState(0);
-    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [progressOpen, setProgressOpen] = useState(false);
     const [createTaskOpen, setCreateTaskOpen] = useState(false);
 
     const [title, setTitle] = useState("");
@@ -76,6 +79,41 @@ export default function Board({
 
     const availableMembers = workspace.currentTeam?.team_members ?? [];
 
+    const progress = (workspace.currentProject?.tasks ?? []).reduce(
+        (counts, task) => {
+            counts.tasks_total++;
+
+            if (task.status === "done") {
+                counts.tasks_completed++;
+            } else if (task.due_date) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const due = new Date(
+                    `${task.due_date.slice(0, 10)}T00:00:00`
+                );
+
+                const days = Math.round(
+                    (due - today) / 86400000
+                );
+
+                if (days < 0) {
+                    counts.tasks_overdue++;
+                } else if (days <= 2) {
+                    counts.tasks_due_soon++;
+                }
+            }
+
+            return counts;
+        },
+        {
+            tasks_total: 0,
+            tasks_completed: 0,
+            tasks_due_soon: 0,
+            tasks_overdue: 0
+        }
+    );
+
     useEffect(() => {
         const channel = supabase
             .channel(`project-${workspace.currentProject["id"]}`)
@@ -89,28 +127,53 @@ export default function Board({
                 },
                 (payload) => {
                     console.log("Task Updated:", payload);
+
                     const task_id = payload.old.id;
 
-                    for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-                        if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                            if (workspace.currentProject["tasks"][i]["status"] !== payload.new.status) {
+                    for (
+                        let i = 0;
+                        i < workspace.currentProject["tasks"].length;
+                        i++
+                    ) {
+                        const task = workspace.currentProject["tasks"][i];
+
+                        if (task["id"] === task_id) {
+                            if (task["status"] !== payload.new.status) {
                                 moveTask(task_id, payload.new.status);
                             }
 
-                            if (workspace.currentProject["tasks"][i]["title"] !== payload.new.title) {
+                            if (task["title"] !== payload.new.title) {
                                 changeTaskTitle(task_id, payload.new.title);
                             }
 
-                            if (workspace.currentProject["tasks"][i]["description"] !== payload.new.description) {
-                                changeTaskDescription(task_id, payload.new.description);
+                            if (
+                                task["description"] !==
+                                payload.new.description
+                            ) {
+                                changeTaskDescription(
+                                    task_id,
+                                    payload.new.description
+                                );
                             }
 
-                            if (workspace.currentProject["tasks"][i]["due_date"] !== payload.new.due_date) {
-                                changeTaskDueDate(task_id, payload.new.due_date);
+                            if (
+                                task["due_date"] !==
+                                payload.new.due_date
+                            ) {
+                                changeTaskDueDate(
+                                    task_id,
+                                    payload.new.due_date
+                                );
                             }
 
-                            if (workspace.currentProject["tasks"][i]["priority"] !== payload.new.priority) {
-                                changeTaskPriority(task_id, payload.new.priority);
+                            if (
+                                task["priority"] !==
+                                payload.new.priority
+                            ) {
+                                changeTaskPriority(
+                                    task_id,
+                                    payload.new.priority
+                                );
                             }
 
                             setNum(prev => (prev + 1) % 10);
@@ -129,14 +192,16 @@ export default function Board({
                 },
                 (payload) => {
                     console.log("Task Added:", payload);
+
                     workspace.currentProject["tasks"].push({
-                        "id": payload.new.id,
-                        "title": payload.new.title,
-                        "description": payload.new.description,
-                        "status": payload.new.status,
-                        "priority": payload.new.priority,
-                        "due_date": payload.new.due_date
+                        id: payload.new.id,
+                        title: payload.new.title,
+                        description: payload.new.description,
+                        status: payload.new.status,
+                        priority: payload.new.priority,
+                        due_date: payload.new.due_date
                     });
+
                     setNum(prev => (prev + 1) % 10);
                 }
             )
@@ -147,12 +212,21 @@ export default function Board({
                 },
                 ({ payload }) => {
                     console.log("Task deleted:", payload.task_id);
-                    for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-                        if (workspace.currentProject["tasks"][i]["id"] === payload.task_id) {
+
+                    for (
+                        let i = 0;
+                        i < workspace.currentProject["tasks"].length;
+                        i++
+                    ) {
+                        if (
+                            workspace.currentProject["tasks"][i]["id"] ===
+                            payload.task_id
+                        ) {
                             workspace.currentProject["tasks"].splice(i, 1);
                             break;
                         }
                     }
+
                     setNum(prev => (prev + 1) % 10);
                 }
             )
@@ -204,17 +278,13 @@ export default function Board({
         if (!memberToAdd) return;
 
         const member = availableMembers.find(
-            (item) => String(item.id) === memberToAdd
+            item => String(item.id) === memberToAdd
         );
 
         if (!member) return;
 
-        setAssignees((previous) => {
-            if (
-                previous.some(
-                    (item) => item.id === member.id
-                )
-            ) {
+        setAssignees(previous => {
+            if (previous.some(item => item.id === member.id)) {
                 return previous;
             }
 
@@ -224,15 +294,13 @@ export default function Board({
         setMemberToAdd("");
     };
 
-    const handleRemoveAssignee = (memberId) => {
-        setAssignees((previous) =>
-            previous.filter(
-                (member) => member.id !== memberId
-            )
+    const handleRemoveAssignee = memberId => {
+        setAssignees(previous =>
+            previous.filter(member => member.id !== memberId)
         );
     };
 
-    const handleCreateTask = async (event) => {
+    const handleCreateTask = async event => {
         event.preventDefault();
 
         if (!title.trim() || submitting) return;
@@ -243,14 +311,12 @@ export default function Board({
             status: status,
             priority: priority,
             due_date: dueDate || null,
-            assignees: assignees.map(
-                (member) => member.id
-            )
+            assignees: assignees.map(member => member.id)
         };
 
         setSubmitting(true);
 
-        createTask(new_task).then((success) => {
+        createTask(new_task).then(success => {
             if (success) {
                 setCreateTaskOpen(false);
                 resetTaskForm();
@@ -262,8 +328,14 @@ export default function Board({
     };
 
     const moveTask = (task_id, new_status) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+        for (
+            let i = 0;
+            i < workspace.currentProject["tasks"].length;
+            i++
+        ) {
+            if (
+                workspace.currentProject["tasks"][i]["id"] === task_id
+            ) {
                 workspace.currentProject["tasks"][i]["status"] = new_status;
                 break;
             }
@@ -271,8 +343,14 @@ export default function Board({
     };
 
     const changeTaskTitle = (task_id, new_title) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
+        for (
+            let i = 0;
+            i < workspace.currentProject["tasks"].length;
+            i++
+        ) {
+            if (
+                workspace.currentProject["tasks"][i]["id"] === task_id
+            ) {
                 workspace.currentProject["tasks"][i]["title"] = new_title;
                 break;
             }
@@ -280,61 +358,96 @@ export default function Board({
     };
 
     const changeTaskDescription = (task_id, new_description) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                workspace.currentProject["tasks"][i]["description"] = new_description;
+        for (
+            let i = 0;
+            i < workspace.currentProject["tasks"].length;
+            i++
+        ) {
+            if (
+                workspace.currentProject["tasks"][i]["id"] === task_id
+            ) {
+                workspace.currentProject["tasks"][i]["description"] =
+                    new_description;
                 break;
             }
         }
     };
 
     const changeTaskDueDate = (task_id, new_due_date) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                workspace.currentProject["tasks"][i]["due_date"] = new_due_date;
+        for (
+            let i = 0;
+            i < workspace.currentProject["tasks"].length;
+            i++
+        ) {
+            if (
+                workspace.currentProject["tasks"][i]["id"] === task_id
+            ) {
+                workspace.currentProject["tasks"][i]["due_date"] =
+                    new_due_date;
                 break;
             }
         }
     };
 
     const changeTaskPriority = (task_id, new_priority) => {
-        for (let i = 0; i < workspace.currentProject["tasks"].length; i++) {
-            if (workspace.currentProject["tasks"][i]["id"] === task_id) {
-                workspace.currentProject["tasks"][i]["priority"] = new_priority;
+        for (
+            let i = 0;
+            i < workspace.currentProject["tasks"].length;
+            i++
+        ) {
+            if (
+                workspace.currentProject["tasks"][i]["id"] === task_id
+            ) {
+                workspace.currentProject["tasks"][i]["priority"] =
+                    new_priority;
                 break;
             }
         }
     };
 
-    const onTaskClick = (event) => {
-        if (event.target.closest("button")) {
-            return;
-        }
+    const onTaskClick = event => {
+        if (event.target.closest("button")) return;
 
         selectedCard.current = event.currentTarget;
 
-        const rect =
-            selectedCard.current.getBoundingClientRect();
+        const rect = selectedCard.current.getBoundingClientRect();
 
         dragOffset.current = {
-            x: rect.x - event.clientX,
-            y: rect.y - event.clientY
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
         };
     };
 
-    const onTaskMove = (event) => {
+    const onTaskMove = event => {
         if (!selectedCard.current) return;
 
-        selectedCard.current.style.position = "absolute";
+        const card = selectedCard.current;
+        const parent = card.offsetParent;
 
-        selectedCard.current.style.left =
-            (event.clientX + dragOffset.current.x) + "px";
+        if (!parent) return;
 
-        selectedCard.current.style.top =
-            (event.clientY + dragOffset.current.y) + "px";
+        const parentRect = parent.getBoundingClientRect();
+
+        card.style.position = "absolute";
+
+        card.style.left =
+            (
+                event.clientX -
+                parentRect.left -
+                dragOffset.current.x +
+                parent.scrollLeft
+            ) + "px";
+
+        card.style.top =
+            (
+                event.clientY -
+                parentRect.top -
+                dragOffset.current.y +
+                parent.scrollTop
+            ) + "px";
     };
 
-    const onMouseUp = (event) => {
+    const onMouseUp = event => {
         if (!selectedCard.current) return;
 
         const task_id = selectedCard.current.id;
@@ -345,8 +458,7 @@ export default function Board({
         );
 
         if (deck) {
-            const tasks =
-                workspace.currentProject?.tasks ?? [];
+            const tasks = workspace.currentProject?.tasks ?? [];
 
             for (let i = 0; i < tasks.length; i++) {
                 if (tasks[i].id === task_id) {
@@ -355,7 +467,7 @@ export default function Board({
                 }
             }
 
-            updateTaskStatus(task_id, deck).then((success) => {
+            updateTaskStatus(task_id, deck).then(success => {
                 if (success) {
                     console.log("Task Moved!");
                 } else {
@@ -367,7 +479,7 @@ export default function Board({
         selectedCard.current.removeAttribute("style");
         selectedCard.current = null;
 
-        setNum((previous) => (previous + 1) % 10);
+        setNum(previous => (previous + 1) % 10);
     };
 
     return (
@@ -375,90 +487,144 @@ export default function Board({
             className="board"
             onMouseMove={onTaskMove}
         >
-            <header className="board-header">
-                <div className="board-header-info">
-                    <span className="board-eyebrow">
-                        PROJECT BOARD
-                    </span>
+            <div className="board-slide-viewport">
+                <div
+                    className={`board-slide board-slide-main ${
+                        progressOpen ? "board-slide-above" : ""
+                    }`}
+                    inert={progressOpen}
+                >
+                    <header className="board-header">
+                        <div className="board-header-info">
+                            <span className="board-eyebrow">
+                                PROJECT BOARD
+                            </span>
 
-                    <h1
-                        className="board-project-name"
-                        title={project_name}
-                    >
-                        {project_name}
-                    </h1>
+                            <h1
+                                className="board-project-name"
+                                title={project_name}
+                            >
+                                {project_name}
+                            </h1>
+                        </div>
+
+                        <div className="board-header-actions">
+                            <button
+                                type="button"
+                                className="board-delete-button"
+                                aria-label="Delete project"
+                                title="Delete project"
+                            >
+                                <Trash2
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
+                                <span>Delete Project</span>
+                            </button>
+                        </div>
+                    </header>
+
+                    <div className="board-decks">
+                        {statuses.map(deckStatus => (
+                            <Deck
+                                key={deckStatus}
+                                status={deckStatus}
+                                onAddTask={handleOpenCreateTask}
+                                onTaskClick={onTaskClick}
+                                onTaskSettings={onTaskSettings}
+                                onMouseUp={onMouseUp}
+                            />
+                        ))}
+                    </div>
                 </div>
 
-                <div className="board-header-actions">
-                    <button
-                        type="button"
-                        className={`board-filter-button ${
-                            filtersOpen
-                                ? "board-filter-active"
-                                : ""
-                        }`}
-                        onClick={() =>
-                            setFiltersOpen(!filtersOpen)
-                        }
-                        aria-expanded={filtersOpen}
-                    >
-                        <SlidersHorizontal
-                            size={17}
-                            strokeWidth={1.8}
-                        />
-                        <span>Filters</span>
-                    </button>
+                <div
+                    className={`board-slide board-slide-progress ${
+                        progressOpen ? "board-slide-visible" : ""
+                    }`}
+                    inert={!progressOpen}
+                >
+                    <div className="board-progress-heading">
+                        <span className="board-eyebrow">
+                            PROJECT OVERVIEW
+                        </span>
 
-                    <button
-                        type="button"
-                        className="board-settings-button"
-                        onClick={() =>
-                            onProjectSettings?.()
-                        }
-                        aria-label="Project settings"
-                        title="Project settings"
-                    >
-                        <Settings2
-                            size={20}
-                            strokeWidth={1.8}
-                        />
-                    </button>
-                </div>
-            </header>
+                        <h2>{project_name}</h2>
 
-            {filtersOpen && (
-                <div className="board-filters-panel">
-                    <div className="board-filters-heading">
-                        <span>Filter tasks</span>
-
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setFiltersOpen(false)
-                            }
-                            aria-label="Close filters"
-                        >
-                            <X size={16} />
-                        </button>
+                        <p>
+                            Progress and upcoming deadlines across this project.
+                        </p>
                     </div>
 
-                    <p>
-                        Filter options will appear here.
-                    </p>
-                </div>
-            )}
+                    <div className="board-progress-grid">
+                        <div className="board-progress-tile">
+                            <ListTodo size={26} strokeWidth={1.7} />
+                            <span>Total Tasks</span>
+                            <strong>{progress.tasks_total}</strong>
+                        </div>
 
-            <div className="board-decks">
-                {statuses.map((deckStatus) => (
-                    <Deck
-                        key={deckStatus}
-                        status={deckStatus}
-                        onAddTask={handleOpenCreateTask}
-                        onTaskClick={onTaskClick}
-                        onTaskSettings={onTaskSettings}
-                        onMouseUp={onMouseUp}
+                        <div className="board-progress-tile board-progress-completed">
+                            <CircleCheck size={26} strokeWidth={1.7} />
+                            <span>Completed</span>
+                            <strong>{progress.tasks_completed}</strong>
+                        </div>
+
+                        <div className="board-progress-tile board-progress-soon">
+                            <Clock3 size={26} strokeWidth={1.7} />
+                            <span>Due Soon</span>
+                            <strong>{progress.tasks_due_soon}</strong>
+                        </div>
+
+                        <div className="board-progress-tile board-progress-overdue">
+                            <AlertTriangle size={26} strokeWidth={1.7} />
+                            <span>Overdue</span>
+                            <strong>{progress.tasks_overdue}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                className="board-slide-switcher"
+                aria-label="Project view selector"
+            >
+                <button
+                    type="button"
+                    className={`board-slide-option ${
+                        !progressOpen ? "active" : ""
+                    }`}
+                    onClick={() => setProgressOpen(false)}
+                    aria-label="Show project board"
+                    aria-pressed={!progressOpen}
+                    title="Project Board"
+                >
+                    <span className="board-slide-option-label">
+                        Board
+                    </span>
+                    <ChevronUp size={17} />
+                </button>
+
+                <div className="board-slide-switcher-track">
+                    <span
+                        className={progressOpen ? "at-bottom" : ""}
                     />
-                ))}
+                </div>
+
+                <button
+                    type="button"
+                    className={`board-slide-option ${
+                        progressOpen ? "active" : ""
+                    }`}
+                    onClick={() => setProgressOpen(true)}
+                    aria-label="Show project progress"
+                    aria-pressed={progressOpen}
+                    title="Project Progress"
+                >
+                    <span className="board-slide-option-label">
+                        Progress
+                    </span>
+                    <ChevronDown size={17} />
+                </button>
             </div>
 
             {createTaskOpen && (
@@ -466,15 +632,12 @@ export default function Board({
                     ref={dialogRef}
                     className="board-task-dialog"
                     onClose={handleCloseCreateTask}
-                    onCancel={(event) => {
+                    onCancel={event => {
                         event.preventDefault();
                         handleCloseCreateTask();
                     }}
-                    onClick={(event) => {
-                        if (
-                            event.target ===
-                            event.currentTarget
-                        ) {
+                    onClick={event => {
+                        if (event.target === event.currentTarget) {
                             handleCloseCreateTask();
                         }
                     }}
@@ -490,7 +653,6 @@ export default function Board({
                                     <span className="board-task-dialog-eyebrow">
                                         NEW TASK
                                     </span>
-
                                     <h2>Create a Task</h2>
                                 </div>
                             </div>
@@ -525,10 +687,8 @@ export default function Board({
                                             type="text"
                                             placeholder="Enter task title..."
                                             value={title}
-                                            onChange={(event) =>
-                                                setTitle(
-                                                    event.target.value
-                                                )
+                                            onChange={event =>
+                                                setTitle(event.target.value)
                                             }
                                             maxLength={150}
                                             required
@@ -545,10 +705,8 @@ export default function Board({
                                             id="board-task-description"
                                             placeholder="Describe what needs to be done..."
                                             value={description}
-                                            onChange={(event) =>
-                                                setDescription(
-                                                    event.target.value
-                                                )
+                                            onChange={event =>
+                                                setDescription(event.target.value)
                                             }
                                             rows={8}
                                         />
@@ -564,13 +722,11 @@ export default function Board({
                                         <select
                                             id="board-task-status"
                                             value={status}
-                                            onChange={(event) =>
-                                                setStatus(
-                                                    event.target.value
-                                                )
+                                            onChange={event =>
+                                                setStatus(event.target.value)
                                             }
                                         >
-                                            {statuses.map((item) => (
+                                            {statuses.map(item => (
                                                 <option
                                                     key={item}
                                                     value={item}
@@ -589,13 +745,11 @@ export default function Board({
                                         <select
                                             id="board-task-priority"
                                             value={priority}
-                                            onChange={(event) =>
-                                                setPriority(
-                                                    event.target.value
-                                                )
+                                            onChange={event =>
+                                                setPriority(event.target.value)
                                             }
                                         >
-                                            {priorities.map((item) => (
+                                            {priorities.map(item => (
                                                 <option
                                                     key={item}
                                                     value={item}
@@ -619,10 +773,8 @@ export default function Board({
                                                 id="board-task-due-date"
                                                 type="date"
                                                 value={dueDate}
-                                                onChange={(event) =>
-                                                    setDueDate(
-                                                        event.target.value
-                                                    )
+                                                onChange={event =>
+                                                    setDueDate(event.target.value)
                                                 }
                                             />
                                         </div>
@@ -637,14 +789,10 @@ export default function Board({
                                             <select
                                                 id="board-task-member-select"
                                                 value={memberToAdd}
-                                                onChange={(event) =>
-                                                    setMemberToAdd(
-                                                        event.target.value
-                                                    )
+                                                onChange={event =>
+                                                    setMemberToAdd(event.target.value)
                                                 }
-                                                disabled={
-                                                    availableMembers.length === 0
-                                                }
+                                                disabled={availableMembers.length === 0}
                                             >
                                                 <option value="">
                                                     {availableMembers.length === 0
@@ -653,15 +801,13 @@ export default function Board({
                                                 </option>
 
                                                 {availableMembers
-                                                    .filter(
-                                                        (member) =>
-                                                            !assignees.some(
-                                                                (assigned) =>
-                                                                    assigned.id ===
-                                                                    member.id
-                                                            )
+                                                    .filter(member =>
+                                                        !assignees.some(
+                                                            assigned =>
+                                                                assigned.id === member.id
+                                                        )
                                                     )
-                                                    .map((member) => (
+                                                    .map(member => (
                                                         <option
                                                             key={member.id}
                                                             value={member.id}
@@ -683,7 +829,7 @@ export default function Board({
                                         </div>
 
                                         <div className="board-task-assignees">
-                                            {assignees.map((member) => (
+                                            {assignees.map(member => (
                                                 <div
                                                     className="board-task-assignee"
                                                     key={member.id}
@@ -701,9 +847,7 @@ export default function Board({
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            handleRemoveAssignee(
-                                                                member.id
-                                                            )
+                                                            handleRemoveAssignee(member.id)
                                                         }
                                                         aria-label={`Remove ${member.username}`}
                                                     >
@@ -738,7 +882,6 @@ export default function Board({
                                     disabled={submitting}
                                 >
                                     <Check size={17} />
-
                                     {submitting
                                         ? "Creating..."
                                         : "Create Task"}
