@@ -289,6 +289,20 @@ export async function editUsername(new_username) {
     return true;
 }
 
+export async function getUsername(user_id) {
+    const { data, error } = await supabase
+        .from("accounts")
+        .select("username")
+        .eq("id", user_id)
+        .single();
+    
+    if (error) {
+        throw error;
+    }
+
+    return data.username;
+}
+
 export async function getUserProgress() {
     const { data: user_data, error: user_error } = await supabase
         .from("assignments")
@@ -443,6 +457,16 @@ export async function joinExistingTeam(team_code) {
 
 export async function leaveTeam(team_id) {
     const today = new Date();
+
+    const { error: assignments_error } = await supabase
+        .from("assignments")
+        .delete()
+        .eq("user_id", workspace.currentUser["id"])
+        .eq("team_id", team_id);
+    
+    if (assignments_error) {
+        return false;
+    }
 
     const { data: team_activity, error: team_activity_error } = await supabase
         .from("teams")

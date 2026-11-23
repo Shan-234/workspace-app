@@ -18,6 +18,7 @@ import {
 
 import {
     supabase,
+    getUsername,
     retrieveTeam,
     workspace,
     createProject,
@@ -201,6 +202,49 @@ export default function Projects() {
                 payload => {
                     console.log("Project Deleted:", payload);
                     handleRemoveProject(payload.old.id);
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "members",
+                    filter: `team_id=eq.${team_id}`
+                },
+                payload => {
+                    console.log("Team member has been added!");
+                    
+                    if (payload.new.user_id === workspace.currentUser["id"]) {
+                        return;
+                    }
+
+                    getUsername(payload.new.user_id).then((username) => {
+                        workspace.currentTeam.team_members.push({
+                            id: payload.new.user_id,
+                            username: username
+                        });
+                    });
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "DELETE",
+                    schema: "public",
+                    table: "members"
+                },
+                payload => {
+                    if (payload.old.team_id !== team_id) {
+                        return;
+                    }
+
+                    for (let i = 0; i < workspace.currentTeam.team_members.length; i++) {
+                        if (workspace.currentTeam.team_members[i].id === payload.old.user_id) {
+                            workspace.currentTeam.team_members.splice(i, 1);
+                            break;
+                        }
+                    }
                 }
             )
             .subscribe(status => {
