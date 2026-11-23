@@ -119,7 +119,7 @@ export default function EditTeams({
     const confirmLeaveTeam = () => {
         leaveTeam(teamToLeave.id).then((success) => {
             if (success) {
-                navigate(-1);
+                onCancel();
             } else {
                 console.error("Error leaving team with ID", teamToLeave.id);
             }

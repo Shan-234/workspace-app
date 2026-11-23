@@ -171,6 +171,8 @@ export default function Dashboard() {
     const slidesRef = useRef(null);
     const [activeSlide, setActiveSlide] = useState(0);
 
+    const returnToTeamsRef = useRef(false);
+
     const teamPageSize = 12;
 
     const slideItems = [
@@ -258,8 +260,17 @@ export default function Dashboard() {
         });
     };
 
+    const closeEditTeams = () => {
+        returnToTeamsRef.current = true;
+
+        retrieveAccount(workspace.currentUser["id"]).then(() => {
+            setUserTeams({ ...workspace.currentUser["user_teams"] });
+            setEditTeams(false);
+        });
+    };
+
     useEffect(() => {
-        if (loading) return;
+        if (loading || editTeams) return;
 
         const container = slidesRef.current;
         if (!container) return;
@@ -297,36 +308,66 @@ export default function Dashboard() {
 
         updateActiveSlide();
 
+        let observer = null;
+
         if (!("IntersectionObserver" in window)) {
             slides.forEach(slide => slide.classList.add("slide-visible"));
+        } else {
+            observer = new IntersectionObserver(
+                entries => {
+                    entries.forEach(entry => {
+                        entry.target.classList.toggle(
+                            "slide-visible",
+                            entry.isIntersecting
+                        );
+                    });
+                },
+                {
+                    root: container,
+                    threshold: 0.45
+                }
+            );
 
-            return () => {
-                container.removeEventListener("scroll", updateActiveSlide);
-            };
+            slides.forEach(slide => observer.observe(slide));
         }
 
-        const observer = new IntersectionObserver(
-            entries => {
-                entries.forEach(entry => {
-                    entry.target.classList.toggle(
-                        "slide-visible",
-                        entry.isIntersecting
-                    );
-                });
-            },
-            {
-                root: container,
-                threshold: 0.45
-            }
-        );
+        let animationFrame = null;
 
-        slides.forEach(slide => observer.observe(slide));
+        if (returnToTeamsRef.current) {
+            returnToTeamsRef.current = false;
+
+            const teamsSlide = slides.find(
+                slide => slide.id === "teams"
+            );
+
+            if (teamsSlide) {
+                teamsSlide.classList.add("slide-visible");
+
+                animationFrame = window.requestAnimationFrame(() => {
+                    const top =
+                        teamsSlide.getBoundingClientRect().top -
+                        container.getBoundingClientRect().top +
+                        container.scrollTop;
+
+                    container.scrollTo({
+                        top,
+                        behavior: "instant"
+                    });
+
+                    setActiveSlide(1);
+                });
+            }
+        }
 
         return () => {
-            observer.disconnect();
+            if (animationFrame !== null) {
+                window.cancelAnimationFrame(animationFrame);
+            }
+
+            observer?.disconnect();
             container.removeEventListener("scroll", updateActiveSlide);
         };
-    }, [loading]);
+    }, [loading, editTeams]);
 
     if (loading) {
         return (
@@ -343,9 +384,7 @@ export default function Dashboard() {
     if (editTeams) {
         return (
             <EditTeams
-                onCancel={() => {
-                    window.location.reload();
-                }}
+                onCancel={closeEditTeams}
             />
         );
     }
